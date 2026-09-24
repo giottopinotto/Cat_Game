@@ -46,7 +46,7 @@ export default defineConfig({
           },
           {
             // Stile, tile vettoriali, font e icone della mappa (OpenFreeMap).
-            urlPattern: ({ url }) => url.hostname === 'tiles.openfreemap.org',
+            urlPattern: ({ url }) => url.hostname === 'tiles.openfreemap.org' || url.hostname === 'basemaps.cartocdn.com',
             handler: 'StaleWhileRevalidate',
             options: {
               cacheName: 'map-tiles',

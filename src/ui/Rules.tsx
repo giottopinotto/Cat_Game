@@ -5,7 +5,7 @@ export const RULES = [
   { e: '🙋', t: 'Chiedi al padrone', d: 'Prima di fotografare un cane al guinzaglio, chiedi sempre il permesso. E non avvicinarti ai cani che non conosci.' },
   { e: '🚦', t: 'Occhi sulla strada', d: 'Non camminare guardando lo schermo e fermati prima di scattare. Mai giocare mentre attraversi.' },
   { e: '🏡', t: 'Rispetta le proprietà', d: 'Non entrare in cortili, giardini o proprietà private per trovare un animale.' },
-  { e: '🔒', t: 'La tua privacy', d: 'Foto e posizioni restano solo sul tuo telefono. Nessuno può vedere dove hai trovato gli animali.' },
+  { e: '🔒', t: 'La tua privacy', d: 'Foto e posizioni restano solo sul tuo telefono. La mappa non mostra nomi di vie o luoghi e l\'app non invia a nessuno dove giochi.' },
 ];
 
 export function Rules() {

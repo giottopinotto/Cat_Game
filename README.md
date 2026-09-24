@@ -94,7 +94,7 @@ Su 123 immagini di esempio (una per razza) la specie è giusta nel 99% dei casi,
 ## Crediti e licenze
 
 - Mappa: © [OpenStreetMap](https://www.openstreetmap.org/copyright) contributors, stile
-  [OpenFreeMap](https://openfreemap.org). Nomi dei luoghi: Nominatim.
+  [OpenFreeMap](https://openfreemap.org).
 - Riconoscimento: [MediaPipe](https://developers.google.com/mediapipe) Tasks Vision e modelli
   EfficientDet-Lite0 / EfficientNet-Lite0 (Apache 2.0).
 - Mappa interattiva: [MapLibre GL JS](https://maplibre.org) (BSD-3-Clause).

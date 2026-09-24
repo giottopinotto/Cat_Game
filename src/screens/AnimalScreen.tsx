@@ -103,12 +103,6 @@ export function AnimalScreen({ id }: { id: string }) {
           <dt>Incontri</dt>
           <dd>{animal.encounters.length}</dd>
         </div>
-        {last.place && (
-          <div>
-            <dt>Ultimo avvistamento</dt>
-            <dd>{last.place}</dd>
-          </div>
-        )}
       </dl>
 
       {entry && (

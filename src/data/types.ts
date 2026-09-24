@@ -53,7 +53,6 @@ export interface Encounter {
   at: number;
   lat: number;
   lng: number;
-  place?: string;
   /** Catturato dentro un parco o un giardino. */
   park?: boolean;
   photoId: string;

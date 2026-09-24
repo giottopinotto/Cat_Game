@@ -219,8 +219,6 @@ export function ProfileScreen() {
             <br />
             Riconoscimento: MediaPipe (EfficientDet-Lite0, EfficientNet-Lite0), licenza Apache 2.0.
             <br />
-            Nomi dei luoghi: Nominatim / OpenStreetMap.
-            <br />
             Carattere: Fredoka (SIL Open Font License).
           </p>
         </Sheet>

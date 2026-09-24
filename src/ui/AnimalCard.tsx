@@ -9,7 +9,6 @@ export function AnimalCard({ animal, photoUrl }: { animal: Animal; photoUrl?: st
   const stored = usePhoto(photoUrl ? undefined : animal.coverPhotoId, 'card');
   const url = photoUrl ?? stored;
   const first = animal.encounters[0];
-  const place = [...animal.encounters].reverse().find((e) => e.place)?.place;
   return (
     <div className={`card ${rarityIndex(animal.rarity) >= 3 ? 'holo' : ''}`} style={rarityStyle(animal.rarity)}>
       <div className="card-inner">
@@ -43,7 +42,7 @@ export function AnimalCard({ animal, photoUrl }: { animal: Animal; photoUrl?: st
             </div>
           ))}
           <div className="card-foot">
-            <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>📍 {place ?? 'Luogo segreto'}</span>
+            <span>📸 {animal.encounters.length} {animal.encounters.length === 1 ? 'incontro' : 'incontri'}</span>
             <span style={{ whiteSpace: 'nowrap' }}>{first ? formatDate(first.at) : ''}</span>
           </div>
         </div>

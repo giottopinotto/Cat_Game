@@ -17,7 +17,6 @@ import {
   type CaptureEvent,
   type Mission,
 } from './missions';
-import { reverseGeocode } from './places';
 import { dayKey, friendshipLevel, levelInfo, makeStats } from './progress';
 import { badgeSummary } from './summary';
 
@@ -272,17 +271,6 @@ export const useGame = create<GameState>((set, get) => {
     if (!newZone && !r.rewards.length) persistPlayer(15000);
   }
 
-  function lookupPlace(animalId: string, at: number, lat: number, lng: number) {
-    void reverseGeocode(lat, lng).then((place) => {
-      if (!place) return;
-      const a = get().animals.find((x) => x.id === animalId);
-      if (!a) return;
-      const updated = { ...a, encounters: a.encounters.map((e) => (e.at === at ? { ...e, place } : e)) };
-      set((s) => ({ animals: s.animals.map((x) => (x.id === animalId ? updated : x)) }));
-      void saveAnimal(updated);
-    });
-  }
-
   function captureEvent(species: Species, entryId: string, rarity: Rarity, reencounter: boolean, newEntry: boolean, park: boolean): CaptureEvent {
     return { species, rarity, coat: getEntry(entryId)?.coat, reencounter, newEntry, inPark: park };
   }
@@ -358,7 +346,6 @@ export const useGame = create<GameState>((set, get) => {
       const updatedPlayer = firstToday ? { ...player, activeDays: [...player.activeDays, day] } : player;
       const ev = captureEvent(d.species, entry.id, rarity, false, newEntry, d.park);
       const r = settle(updatedPlayer, [animal, ...animals], base, (m) => applyCaptureToMission(m, ev));
-      lookupPlace(id, now, d.lat, d.lng);
       return {
         animal,
         isNew: true,
@@ -405,7 +392,6 @@ export const useGame = create<GameState>((set, get) => {
         // Rivedere lo stesso animale nello stesso giorno non fa avanzare le sfide.
         (m) => (sameDay ? m : applyCaptureToMission(m, ev)),
       );
-      lookupPlace(a.id, now, d.lat, d.lng);
       return {
         animal: updated,
         isNew: false,

@@ -17,16 +17,16 @@ maplibregl.setWorkerUrl(mapWorkerUrl);
 // Mappa gratuita: stile vettoriale OpenFreeMap (dati OpenStreetMap), senza chiavi.
 const STYLE_URL = 'https://tiles.openfreemap.org/styles/liberty';
 
-// Piano B se OpenFreeMap non risponde: le classiche tile raster di OpenStreetMap.
+// Piano B se OpenFreeMap non risponde: tile raster senza scritte (CARTO, dati OpenStreetMap).
 const FALLBACK_STYLE: StyleSpecification = {
   version: 8,
   sources: {
     osm: {
       type: 'raster',
-      tiles: ['https://tile.openstreetmap.org/{z}/{x}/{y}.png'],
+      tiles: ['https://basemaps.cartocdn.com/rastertiles/voyager_nolabels/{z}/{x}/{y}.png'],
       tileSize: 256,
       maxzoom: 19,
-      attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+      attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> © <a href="https://carto.com/attributions">CARTO</a>',
     },
   },
   layers: [{ id: 'osm', type: 'raster', source: 'osm' }],
@@ -101,6 +101,11 @@ function zonesGeoJSON(zones: string[]): GeoJSON.FeatureCollection {
 }
 
 const EMPTY: GeoJSON.FeatureCollection = { type: 'FeatureCollection', features: [] };
+
+/** Toglie tutte le scritte e le icone (nomi di vie, negozi, quartieri): restano solo strade ed edifici. */
+function removeLabels(map: maplibregl.Map) {
+  for (const layer of map.getStyle().layers ?? []) if (layer.type === 'symbol') map.removeLayer(layer.id);
+}
 
 function addGameLayers(map: maplibregl.Map) {
   if (map.getSource('zones')) return;
@@ -185,6 +190,7 @@ export function MapView() {
       if (!map.isStyleLoaded() && /style|Failed to fetch|NetworkError/i.test(String(e.error?.message ?? ''))) useFallback();
     });
     map.on('style.load', () => {
+      removeLabels(map);
       addGameLayers(map);
       setStyleReady((n) => n + 1);
     });
