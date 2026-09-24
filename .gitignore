@@ -1,0 +1,8 @@
+node_modules
+dist
+dev-dist
+public/mediapipe
+*.log
+.DS_Store
+eval/*.json
+*.tsbuildinfo

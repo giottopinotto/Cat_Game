@@ -1,0 +1,114 @@
+import { useState } from 'react';
+import { startLocation } from '../game/location';
+import { useGame } from '../game/store';
+import { Logo } from '../ui/common';
+import { AVATARS, Rules } from '../ui/Rules';
+
+const HOW = [
+  { e: '🗺️', t: 'Esplora il mondo vero', d: 'Cammina per la tua città: ogni zona nuova ti dà punti.' },
+  { e: '📸', t: 'Fotografa cani e gatti', d: 'Quando ne incontri uno, inquadralo e scatta.' },
+  { e: '🤖', t: "L'AI lo riconosce", d: 'Capisce se è un cane o un gatto e ti propone la razza o il mantello.' },
+  { e: '🃏', t: 'Colleziona le carte', d: "Ogni animale diventa una carta: completa l'album delle razze!" },
+  { e: '💞', t: 'Fatti degli amici', d: 'Rivedi lo stesso animale in giorni diversi per aumentare la vostra amicizia.' },
+];
+
+export function Onboarding() {
+  const finish = useGame((s) => s.finishOnboarding);
+  const [step, setStep] = useState(0);
+  const [promise, setPromise] = useState(false);
+  const [name, setName] = useState('');
+  const [avatar, setAvatar] = useState(AVATARS[0]);
+
+  function start() {
+    finish(name.trim() || 'Esploratore', avatar);
+    startLocation();
+  }
+
+  return (
+    <div className="onboarding">
+      {step === 0 && (
+        <div className="step" key={0}>
+          <Logo />
+          <h1>Zampe in Giro</h1>
+          <p className="lead">Cattura con la fotocamera i veri cani e gatti che incontri per strada!</p>
+        </div>
+      )}
+      {step === 1 && (
+        <div className="step" key={1}>
+          <h1>Come si gioca</h1>
+          <div className="how">
+            {HOW.map((h) => (
+              <div key={h.t}>
+                <span className="e">{h.e}</span>
+                <span>
+                  <b>{h.t}</b>
+                  <span>{h.d}</span>
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+      {step === 2 && (
+        <div className="step" key={2}>
+          <h1>Regole d'oro</h1>
+          <p className="lead" style={{ marginBottom: 16 }}>
+            Gli animali veri vanno rispettati.
+          </p>
+          <Rules />
+          <button className="switch-row" onClick={() => setPromise((p) => !p)}>
+            <span style={{ fontSize: 26 }}>🤞</span>
+            <b className="grow">Prometto di rispettare le regole</b>
+            <span className={`switch ${promise ? 'on' : ''}`} />
+          </button>
+        </div>
+      )}
+      {step === 3 && (
+        <div className="step" key={3}>
+          <h1>Chi sei?</h1>
+          <p className="lead">Scegli il tuo nome da esploratore e un avatar.</p>
+          <label className="field">
+            <span>Nome</span>
+            <input className="input" value={name} maxLength={20} placeholder="Es. Giovanni" onChange={(e) => setName(e.target.value)} />
+          </label>
+          <div className="field">
+            <span>Avatar</span>
+            <div className="avatars">
+              {AVATARS.map((a) => (
+                <button key={a} className={avatar === a ? 'active' : ''} onClick={() => setAvatar(a)}>
+                  {a}
+                </button>
+              ))}
+            </div>
+          </div>
+          <p className="muted" style={{ fontSize: 14, marginTop: 16 }}>
+            📍 Al prossimo passo il telefono ti chiederà il permesso di usare la posizione: serve per la mappa e per registrare dove trovi gli
+            animali (resta solo sul tuo telefono).
+          </p>
+        </div>
+      )}
+
+      <div className="dots">
+        {[0, 1, 2, 3].map((i) => (
+          <i key={i} className={i === step ? 'on' : ''} />
+        ))}
+      </div>
+      <div className="onboarding-actions">
+        {step < 3 ? (
+          <button className="btn btn-primary btn-block" disabled={step === 2 && !promise} onClick={() => setStep((s) => s + 1)}>
+            {step === 0 ? 'Iniziamo!' : 'Avanti'}
+          </button>
+        ) : (
+          <button className="btn btn-primary btn-block" disabled={!name.trim()} onClick={start}>
+            🐾 Inizia a giocare
+          </button>
+        )}
+        {step > 0 && (
+          <button className="btn btn-ghost btn-block" onClick={() => setStep((s) => s - 1)}>
+            Indietro
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
