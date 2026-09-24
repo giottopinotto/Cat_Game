@@ -40,6 +40,13 @@ fotografare il suo cane, guarda la strada e non lo schermo, non entrare in propr
 L'app è un sito statico: basta pubblicare la cartella `dist/`. La fotocamera e il GPS funzionano solo su
 **https**.
 
+### Con GitHub Pages (repository pubblico)
+
+1. *Settings → General → Danger Zone → Change visibility → Make public*.
+2. *Settings → Pages*, alla voce **Source** scegli **GitHub Actions**.
+3. A ogni modifica del ramo `main` il workflow `.github/workflows/deploy.yml` esegue i test, compila e
+   pubblica il sito su `https://<utente>.github.io/Cat_Game/`.
+
 ### Con Netlify (gratis, anche con repository privato)
 
 1. Crea un account gratuito su [netlify.com](https://www.netlify.com) scegliendo **Sign up with GitHub**.
@@ -49,8 +56,6 @@ L'app è un sito statico: basta pubblicare la cartella `dist/`. La fotocamera e 
 4. Ogni volta che il ramo `main` cambia, Netlify ripubblica il sito da solo.
 
 In alternativa vanno bene anche Vercel o Cloudflare Pages: comando `npm run build`, cartella `dist`.
-
-Il workflow `.github/workflows/test.yml` esegue test e build a ogni modifica.
 
 ## Sviluppo
 
