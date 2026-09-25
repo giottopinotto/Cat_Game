@@ -8,6 +8,7 @@ import { AlbumScreen } from './screens/AlbumScreen';
 import { AnimalScreen } from './screens/AnimalScreen';
 import { CollectionScreen } from './screens/CollectionScreen';
 import { DiaryScreen } from './screens/DiaryScreen';
+import { FriendLink, FriendsScreen } from './screens/FriendsScreen';
 import { Onboarding } from './screens/Onboarding';
 import { ProfileScreen } from './screens/ProfileScreen';
 import { BottomNav } from './ui/BottomNav';
@@ -52,9 +53,9 @@ export function App() {
   }
   if (!onboarded) return <Onboarding />;
 
-  const known = TABS.includes(page) || ['animale', 'cattura', 'diario'].includes(page);
+  const known = TABS.includes(page) || ['animale', 'cattura', 'diario', 'amici', 'amico'].includes(page);
   const route = known ? page : '';
-  const tab = route === 'animale' ? 'collezione' : route === 'diario' ? 'profilo' : route;
+  const tab = route === 'animale' ? 'collezione' : route === 'diario' || route === 'amici' ? 'profilo' : route;
 
   return (
     <>
@@ -64,13 +65,15 @@ export function App() {
       {route === 'album' && <AlbumScreen entryId={param} key={param ? 'entry' : 'list'} />}
       {route === 'profilo' && <ProfileScreen />}
       {route === 'diario' && <DiaryScreen />}
+      {route === 'amici' && <FriendsScreen id={param} key={param ?? 'list'} />}
+      {route === 'amico' && param && <FriendLink token={param} key={param} />}
       {route === 'animale' && param && <AnimalScreen id={param} />}
       {route === 'cattura' && (
         <Suspense fallback={<div className="capture" />}>
           <CaptureScreen />
         </Suspense>
       )}
-      {(TABS.includes(route) || route === 'diario') && <BottomNav active={tab} />}
+      {(TABS.includes(route) || route === 'diario' || route === 'amici') && <BottomNav active={tab} />}
       <Toasts />
       {route !== 'cattura' && <Celebrations />}
     </>

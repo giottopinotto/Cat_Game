@@ -1,4 +1,4 @@
-import { CalendarDays, Download, House, Info, Moon, Pencil, ShieldCheck, Smartphone, Trash2, Upload, Vibrate, Volume2 } from 'lucide-react';
+import { CalendarDays, Download, House, Info, Moon, Pencil, ShieldCheck, Smartphone, Trash2, Upload, Users, Vibrate, Volume2 } from 'lucide-react';
 import { useMemo, useRef, useState } from 'react';
 import { BADGES, badgeTier, TIER_NAMES, tierText, type BadgeSummary } from '../game/badges';
 import { importBackup } from '../game/backup';
@@ -133,6 +133,17 @@ export function ProfileScreen() {
             Installa l'app sul telefono
           </button>
         )}
+        <button onClick={() => go('amici')}>
+          <span className="ico">
+            <Users size={19} />
+          </span>
+          <span className="grow">
+            Amici
+            <div className="muted" style={{ fontSize: 13 }}>
+              {player.friends.length ? `${player.friends.length} ${player.friends.length === 1 ? 'amico' : 'amici'} · classifica` : 'Aggiungi i tuoi amici con il QR'}
+            </div>
+          </span>
+        </button>
         <button onClick={() => go('diario')}>
           <span className="ico">
             <CalendarDays size={19} />

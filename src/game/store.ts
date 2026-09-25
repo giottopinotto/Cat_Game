@@ -5,7 +5,8 @@ import { RARITIES, RARITY_INFO, rarityIndex, type Animal, type Encounter, type R
 import { BADGES, badgeTier, TIER_NAMES, TIER_XP, type BadgeDef } from './badges';
 import { deleteAnimal, kvGet, kvSet, loadAnimals, requestPersistence, saveAnimal, savePhoto } from './db';
 import { eventBonus } from './events';
-import { cleanFriendCard, MAX_FRIEND_CARDS, type FriendCard } from './friends';
+import { cleanFriend, MAX_FRIENDS, type Friend } from './friends';
+import { getIdentity } from './identity';
 import { distanceM, hexCenter, hexId, type LatLng } from './geo';
 import { inHome, makeHomeZone, privatize, type HomeZone } from './privacy';
 import { onFix, type Fix } from './location';
@@ -37,9 +38,13 @@ export interface Settings {
   vibration: boolean;
   /** Tema: automatico (scuro la sera), sempre chiaro o sempre scuro. */
   theme: ThemeChoice;
+  /** Mostrare agli amici i km a piedi. */
+  shareKm: boolean;
+  /** Mostrare agli amici i nomi dati ai propri animali. */
+  shareNames: boolean;
 }
 
-export const DEFAULT_SETTINGS: Settings = { sound: true, vibration: true, theme: 'auto' };
+export const DEFAULT_SETTINGS: Settings = { sound: true, vibration: true, theme: 'auto', shareKm: true, shareNames: true };
 
 export interface PlayerData {
   name: string;
@@ -62,8 +67,8 @@ export interface PlayerData {
   backupNagAt: number;
   /** Metri camminati per giorno (AAAA-MM-GG), per il diario. */
   dailyWalk: Record<string, number>;
-  /** Carte ricevute dagli amici. */
-  friends: FriendCard[];
+  /** Amici aggiunti di persona, con l'ultimo profilo ricevuto. */
+  friends: Friend[];
 }
 
 export interface Reward {
@@ -134,10 +139,15 @@ interface GameState {
   updateSettings(s: Partial<Settings>): void;
   markBackupDone(): void;
   snoozeBackup(): void;
-  /** Aggiunge una carta amica. 'own' se è una propria carta. */
-  addFriendCard(card: FriendCard): 'new' | 'updated' | 'own';
-  removeFriendCard(id: string): void;
+  /**
+   * Aggiunge o aggiorna un amico. Di persona (QR) si può aggiungere chiunque; con un link
+   * solo chi è già tra gli amici, e solo se l'aggiornamento è più recente.
+   */
+  saveFriend(f: Friend, inPerson: boolean): Promise<FriendResult>;
+  removeFriend(id: string): void;
 }
+
+export type FriendResult = 'new' | 'updated' | 'old' | 'unknown' | 'self' | 'full' | 'invalid';
 
 /** Quanti giorni di metri camminati tenere nel diario. */
 const WALK_DAYS = 400;
@@ -198,7 +208,8 @@ export function normalizePlayer(stored: Partial<PlayerData> | undefined): Player
     home: stored.home ?? null,
     settings: { ...DEFAULT_SETTINGS, ...stored.settings },
     dailyWalk: { ...stored.dailyWalk },
-    friends: stored.friends ?? [],
+    // Le vecchie "carte degli amici" (senza chiave) non si usano più.
+    friends: (stored.friends ?? []).filter((f) => typeof (f as Partial<Friend>).pub === 'string'),
   };
 }
 
@@ -565,18 +576,22 @@ export const useGame = create<GameState>((set, get) => {
       persistPlayer();
     },
 
-    addFriendCard(card) {
-      const clean = cleanFriendCard(card);
-      if (!clean || get().animals.some((a) => a.id === clean.id)) return 'own';
+    async saveFriend(f, inPerson) {
+      const clean = cleanFriend(f);
+      if (!clean) return 'invalid';
+      if (clean.pub === (await getIdentity()).pub) return 'self';
       const p = get().player;
-      const exists = p.friends.some((f) => f.id === clean.id);
-      const friends = [clean, ...p.friends.filter((f) => f.id !== clean.id)].slice(0, MAX_FRIEND_CARDS);
-      set({ player: { ...p, friends } });
+      const old = p.friends.find((x) => x.id === clean.id);
+      if (!old && !inPerson) return 'unknown';
+      if (old && (old.pub !== clean.pub || clean.seq <= old.seq)) return 'old';
+      if (!old && p.friends.length >= MAX_FRIENDS) return 'full';
+      const friends = old ? p.friends.map((x) => (x.id === clean.id ? clean : x)) : [...p.friends, clean];
+      set({ player: { ...get().player, friends } });
       persistPlayer();
-      return exists ? 'updated' : 'new';
+      return old ? 'updated' : 'new';
     },
 
-    removeFriendCard(id) {
+    removeFriend(id) {
       set((s) => ({ player: { ...s.player, friends: s.player.friends.filter((f) => f.id !== id) } }));
       persistPlayer();
     },

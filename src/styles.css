@@ -2808,25 +2808,11 @@ p {
   }
 }
 
-.friend-preview {
-  display: flex;
-  justify-content: center;
-}
-
-.friend-preview .card {
-  width: min(100%, 320px);
-}
-
-.friend-photo,
 .friend-mini .mini-photo {
   display: grid;
   place-items: center;
   background: radial-gradient(circle at 50% 40%, color-mix(in srgb, var(--rarity) 30%, #fff), color-mix(in srgb, var(--rarity) 12%, #f4effb));
   color: color-mix(in srgb, var(--rarity) 55%, #5a5078);
-}
-
-.friend-photo {
-  aspect-ratio: 4 / 3;
 }
 
 /* ---------- Diario ---------- */
@@ -2990,7 +2976,6 @@ p {
   color: #ffd45c;
 }
 
-:root[data-theme='dark'] .friend-photo,
 :root[data-theme='dark'] .friend-mini .mini-photo {
   background: radial-gradient(circle at 50% 40%, color-mix(in srgb, var(--rarity) 35%, #2e2749), #241e3b);
   color: color-mix(in srgb, var(--rarity) 60%, #cfc3ee);
@@ -3020,8 +3005,102 @@ p {
   color: #6f6a86;
 }
 
-.friend-photo .silhouette,
 .friend-mini .silhouette {
   color: inherit;
   opacity: 0.85;
+}
+
+/* ---------- Amici ---------- */
+
+.friend-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.ranking {
+  background: var(--surface);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+}
+
+.rank-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 14px;
+  text-align: left;
+  border-bottom: 1px solid var(--line);
+}
+
+.rank-row:last-child {
+  border-bottom: none;
+}
+
+.rank-row.me {
+  background: var(--surface-2);
+}
+
+.rank-row .pos {
+  width: 24px;
+  font-weight: 700;
+  font-size: 18px;
+  color: var(--primary-dark);
+  text-align: center;
+}
+
+.rank-row:first-child .pos {
+  color: var(--gold);
+}
+
+.rank-row .xp {
+  font-weight: 700;
+  font-size: 14px;
+  white-space: nowrap;
+}
+
+.rarity-bars {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 6px;
+  margin-top: 12px;
+}
+
+.rarity-bars > div {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 8px 2px;
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--rarity) 16%, var(--surface));
+  font-size: 11px;
+  text-align: center;
+  line-height: 1.1;
+}
+
+.rarity-bars b {
+  font-size: 20px;
+  color: var(--rarity);
+}
+
+.medal-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.chips.wrap {
+  flex-wrap: wrap;
+  overflow: visible;
+}
+
+.friend-mini {
+  cursor: default;
+}
+
+textarea.input {
+  resize: vertical;
+  font-family: inherit;
 }

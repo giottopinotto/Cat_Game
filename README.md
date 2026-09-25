@@ -29,8 +29,10 @@ e i dati restano sul telefono.
   immagine.
 - 🏠 **Zona privata di casa**: vicino a casa le catture non salvano la posizione precisa, solo una zona
   con il centro spostato a caso. Anche le zone esplorate lì non vengono segnate.
-- 🤝 **Carte degli amici**: si scambiano di persona con un QR code, senza internet. Il QR contiene solo
-  nome, razza e rarità (niente foto né posizione); rarità e statistiche vengono ricalcolate da chi lo riceve.
+- 🤝 **Amici senza server**: ci si aggiunge di persona con un QR code; poi gli aggiornamenti (livello,
+  medaglie, collezione) si mandano con un link in chat. I dati stanno dopo il `#` del link, che il browser
+  non invia a nessun sito, e sono firmati dal telefono (ECDSA): nessuno può spacciarsi per un amico.
+  Mai posizioni, foto, date od orari. Classifica e confronto dell'album.
 - 🎉 **Eventi a tempo** (Giornata degli animali, Halloween, Natale, domeniche al parco...) con XP extra.
 - 📅 **Diario** delle uscite: calendario con animali visti e km fatti ogni giorno.
 - 🌙 **Tema scuro** la sera (o sempre), **suoni** e vibrazioni disattivabili, **promemoria del backup**.

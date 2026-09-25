@@ -4,10 +4,7 @@ import { pawPoints } from '../game/progress';
 import { useGame } from '../game/store';
 import { go } from '../router';
 import { MiniCard } from '../ui/AnimalCard';
-import { FriendMini } from '../ui/FriendCard';
-import { GameIcon, IconBubble, SpeciesIcon } from '../ui/icons';
-import type { FriendCard } from '../game/friends';
-import { FriendCardSheet, ScanSheet } from './FriendSheets';
+import { GameIcon, SpeciesIcon } from '../ui/icons';
 
 type Filter = 'all' | Species;
 type Sort = 'recent' | 'rarity' | 'pz' | 'name';
@@ -21,8 +18,6 @@ const SORTS: { id: Sort; label: string }[] = [
 
 export function CollectionScreen() {
   const animals = useGame((s) => s.animals);
-  const friends = useGame((s) => s.player.friends);
-  const [tab, setTab] = useState<'mine' | 'friends'>('mine');
   const [filter, setFilter] = useState<Filter>('all');
   const [sort, setSort] = useState<Sort>('recent');
   const cats = animals.filter((a) => a.species === 'cat').length;
@@ -53,18 +48,7 @@ export function CollectionScreen() {
         </div>
       </div>
 
-      <div className="segmented" style={{ marginBottom: 14 }}>
-        <button className={tab === 'mine' ? 'active' : ''} onClick={() => setTab('mine')}>
-          I miei
-        </button>
-        <button className={tab === 'friends' ? 'active' : ''} onClick={() => setTab('friends')}>
-          Amici {friends.length > 0 && `(${friends.length})`}
-        </button>
-      </div>
-
-      {tab === 'friends' ? (
-        <FriendsTab friends={friends} />
-      ) : animals.length === 0 ? (
+      {animals.length === 0 ? (
         <div className="empty">
           <div className="e">
             <GameIcon name="paw" size={56} />
@@ -108,33 +92,3 @@ export function CollectionScreen() {
   );
 }
 
-function FriendsTab({ friends }: { friends: FriendCard[] }) {
-  const [scan, setScan] = useState(false);
-  const [open, setOpen] = useState<FriendCard | null>(null);
-  return (
-    <>
-      <button className="switch-row" style={{ marginTop: 0 }} onClick={() => setScan(true)}>
-        <IconBubble name="scan" size={44} tone="mint" />
-        <span className="grow">
-          <b>Scansiona la carta di un amico</b>
-          <div className="muted" style={{ fontSize: 13 }}>
-            Di persona, con il QR della sua carta. Per mostrare le tue: apri una carta e tocca "Mostra a un amico".
-          </div>
-        </span>
-      </button>
-      {friends.length === 0 ? (
-        <p className="muted center" style={{ marginTop: 30 }}>
-          Ancora nessuna carta degli amici.
-        </p>
-      ) : (
-        <div className="grid" style={{ marginTop: 14 }}>
-          {friends.map((f) => (
-            <FriendMini key={f.id} card={f} onClick={() => setOpen(f)} />
-          ))}
-        </div>
-      )}
-      {scan && <ScanSheet onClose={() => setScan(false)} />}
-      {open && <FriendCardSheet card={open} onClose={() => setOpen(null)} />}
-    </>
-  );
-}

@@ -3,7 +3,7 @@ import { RARITIES, type Animal, type Encounter, type Rarity, type Stats } from '
 import { getAllPhotos, loadAnimals, kvGet, replaceAll, type PhotoRecord } from './db';
 import { AVATAR_IDS } from '../ui/avatars';
 import { forgetPhotos } from './photos';
-import { cleanFriendCard, MAX_FRIEND_CARDS, type FriendCard } from './friends';
+import { cleanFriend, MAX_FRIENDS, type Friend } from './friends';
 import { isHomeZone } from './privacy';
 import { DEFAULT_SETTINGS, normalizePlayer, type PlayerData, type ThemeChoice } from './store';
 
@@ -123,6 +123,8 @@ function cleanPlayer(p: unknown): PlayerData {
       sound: typeof x.settings?.sound === 'boolean' ? x.settings.sound : DEFAULT_SETTINGS.sound,
       vibration: typeof x.settings?.vibration === 'boolean' ? x.settings.vibration : DEFAULT_SETTINGS.vibration,
       theme: (['auto', 'light', 'dark'] as ThemeChoice[]).includes(x.settings?.theme as ThemeChoice) ? x.settings!.theme : DEFAULT_SETTINGS.theme,
+      shareKm: typeof x.settings?.shareKm === 'boolean' ? x.settings.shareKm : DEFAULT_SETTINGS.shareKm,
+      shareNames: typeof x.settings?.shareNames === 'boolean' ? x.settings.shareNames : DEFAULT_SETTINGS.shareNames,
     },
     lastBackupAt: clamp(x.lastBackupAt, 0, Date.now() + 86400000, 0),
     backupNagAt: clamp(x.backupNagAt, 0, Date.now() + 86400000, 0),
@@ -133,9 +135,10 @@ function cleanPlayer(p: unknown): PlayerData {
         .map(([k, v]) => [k, clamp(v, 0, 1e6, 0)]),
     ),
     friends: (Array.isArray(x.friends) ? x.friends : [])
-      .slice(0, MAX_FRIEND_CARDS)
-      .map(cleanFriendCard)
-      .filter((f): f is FriendCard => !!f),
+      .slice(0, MAX_FRIENDS)
+      .map(cleanFriend)
+      .filter((f): f is Friend => !!f)
+      .filter((f, i, all) => all.findIndex((o) => o.id === f.id) === i),
   };
 }
 

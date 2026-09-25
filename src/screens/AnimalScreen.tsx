@@ -11,14 +11,12 @@ import { AnimalCard } from '../ui/AnimalCard';
 import { formatDate, RarityPill, Sheet } from '../ui/common';
 import { GameIcon, Hearts } from '../ui/icons';
 import { shareAnimal } from '../ui/shareCard';
-import { ShowQrSheet } from './FriendSheets';
 
 export function AnimalScreen({ id }: { id: string }) {
   const animal = useGame((s) => s.animals.find((a) => a.id === id));
   const [rename, setRename] = useState(false);
   const [release, setRelease] = useState(false);
   const [sharing, setSharing] = useState(false);
-  const [qr, setQr] = useState(false);
 
   if (!animal) {
     return (
@@ -141,9 +139,6 @@ export function AnimalScreen({ id }: { id: string }) {
       </div>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 24 }}>
-        <button className="btn btn-teal btn-block" onClick={() => setQr(true)}>
-          <GameIcon name="qr" /> Mostra a un amico
-        </button>
         <button
           className="btn btn-block"
           onClick={() => {
@@ -158,7 +153,6 @@ export function AnimalScreen({ id }: { id: string }) {
         </button>
       </div>
 
-      {qr && <ShowQrSheet animal={animal} onClose={() => setQr(false)} />}
       {rename && <RenameSheet animal={animal} onClose={() => setRename(false)} />}
       {release && <ReleaseSheet animal={animal} onClose={() => setRelease(false)} />}
     </div>
