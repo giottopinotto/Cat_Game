@@ -96,3 +96,22 @@ export function tooFast(fix: Fix | null): boolean {
 export function captureFixOk(fix: Fix | null): fix is Fix {
   return !!fix && fix.accuracy <= CAPTURE_MAX_ACCURACY && Date.now() - fix.at < 2 * 60 * 1000;
 }
+
+/** Aspetta una posizione buona per la cattura (null se non arriva entro `ms`). */
+export function waitForFix(ms: number): Promise<Fix | null> {
+  const now = useLocation.getState().fix;
+  if (captureFixOk(now)) return Promise.resolve(now);
+  return new Promise((resolve) => {
+    const timer = setTimeout(() => {
+      unsub();
+      resolve(null);
+    }, ms);
+    const unsub = useLocation.subscribe((s) => {
+      if (captureFixOk(s.fix) || s.status === 'denied' || s.status === 'unavailable') {
+        clearTimeout(timer);
+        unsub();
+        resolve(captureFixOk(s.fix) ? s.fix : null);
+      }
+    });
+  });
+}

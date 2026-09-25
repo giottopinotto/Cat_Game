@@ -44,6 +44,24 @@ const variants = [
   { file: 'apple-touch-icon.png', size: 180, bleed: true, scale: 0.85 },
 ];
 
+// Icona della scorciatoia "Cattura" (tenendo premuta l'icona dell'app su Android).
+const CAMERA =
+  '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">' +
+  '<path d="M13.997 4a2 2 0 0 1 1.76 1.05l.486.9A2 2 0 0 0 18.003 7H20a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h1.997a2 2 0 0 0 1.759-1.048l.489-.904A2 2 0 0 1 10.004 4z"/>' +
+  '<circle cx="12" cy="13" r="3"/></svg>';
+
+async function shortcutIcon(dir, c) {
+  for (const size of [96, 192]) {
+    const inner = `<div style="width:${size}px;height:${size}px;border-radius:50%;background:linear-gradient(${c.top},${c.bottom});display:grid;place-items:center">
+      <div style="width:${size * 0.52}px;height:${size * 0.52}px">${CAMERA.replace('<svg', '<svg width="100%" height="100%"')}</div></div>`;
+    await page.setViewportSize({ width: size, height: size });
+    await page.setContent(`<html><body style="margin:0;background:transparent">${inner}</body></html>`);
+    writeFileSync(join(dir, `shortcut-camera-${size}.png`), await page.screenshot({ omitBackground: true, clip: { x: 0, y: 0, width: size, height: size } }));
+  }
+}
+
+await shortcutIcon(join(root, 'public/icons'), colorsOf({ id: 'lilla' }));
+
 for (const a of accents) {
   if (a.id === 'lilla') continue;
   const c = colorsOf(a);
@@ -78,7 +96,20 @@ for (const a of accents) {
       { src: `icons/${a.id}/icon-512.png`, sizes: '512x512', type: 'image/png' },
       { src: `icons/${a.id}/icon-maskable-512.png`, sizes: '512x512', type: 'image/png', purpose: 'maskable' },
     ],
+    shortcuts: [
+      {
+        name: 'Cattura un animale',
+        short_name: 'Cattura',
+        description: 'Apri subito la fotocamera',
+        url: './#/cattura',
+        icons: [
+          { src: `icons/${a.id}/shortcut-camera-96.png`, sizes: '96x96', type: 'image/png' },
+          { src: `icons/${a.id}/shortcut-camera-192.png`, sizes: '192x192', type: 'image/png' },
+        ],
+      },
+    ],
   };
+  await shortcutIcon(dir, c);
   writeFileSync(join(root, `public/manifest-${a.id}.webmanifest`), JSON.stringify(manifest, null, 2) + '\n');
   console.log('ok', a.id);
 }

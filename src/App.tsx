@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect } from 'react';
+import { lazy, Suspense, useEffect, useState } from 'react';
 import { releaseLocation, startLocation } from './game/location';
 import { useGame } from './game/store';
 import { MapHud } from './map/MapHud';
@@ -20,6 +20,14 @@ import { useAppearance } from './ui/theme';
 // La cattura (con la AI) si carica a parte: l'avvio dell'app resta leggero.
 const CaptureScreen = lazy(() => import('./capture/CaptureScreen').then((m) => ({ default: m.CaptureScreen })));
 
+// Aperta dalla scorciatoia "Cattura" (tenendo premuta l'icona): si prepara subito la
+// fotocamera e il riconoscimento, mentre l'app finisce di caricare i dati.
+const startedOnCapture = typeof location !== 'undefined' && location.hash.startsWith('#/cattura');
+if (startedOnCapture) {
+  void import('./capture/CaptureScreen').catch(() => {});
+  void import('./vision/engine').then((m) => m.loadDetector()).catch(() => {});
+}
+
 const TABS = ['', 'collezione', 'album', 'profilo'];
 
 export function App() {
@@ -32,6 +40,11 @@ export function App() {
     return s.animals.some((a) => !seen.has(a.entryId));
   });
   const [page = '', param] = useRoute();
+  // La mappa (pesante) parte solo quando serve: aprendo dalla scorciatoia "Cattura" aspetta.
+  const [mapOn, setMapOn] = useState(!startedOnCapture);
+  useEffect(() => {
+    if (page !== 'cattura') setMapOn(true);
+  }, [page]);
   useAppearance();
 
   useEffect(() => {
@@ -68,7 +81,7 @@ export function App() {
 
   return (
     <>
-      <MapView />
+      {mapOn && <MapView />}
       {route === '' && <MapHud />}
       {route === 'collezione' && <CollectionScreen />}
       {route === 'album' && <AlbumScreen entryId={param} key={param ? 'entry' : 'list'} />}

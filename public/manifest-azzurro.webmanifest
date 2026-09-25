@@ -27,5 +27,25 @@
       "type": "image/png",
       "purpose": "maskable"
     }
+  ],
+  "shortcuts": [
+    {
+      "name": "Cattura un animale",
+      "short_name": "Cattura",
+      "description": "Apri subito la fotocamera",
+      "url": "./#/cattura",
+      "icons": [
+        {
+          "src": "icons/azzurro/shortcut-camera-96.png",
+          "sizes": "96x96",
+          "type": "image/png"
+        },
+        {
+          "src": "icons/azzurro/shortcut-camera-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    }
   ]
 }

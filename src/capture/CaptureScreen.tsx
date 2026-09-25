@@ -2,7 +2,7 @@ import { X } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState, type CSSProperties } from 'react';
 import { SPECIES_NAME } from '../data/entries';
 import type { Species } from '../data/types';
-import { captureFixOk, releaseLocation, startLocation, tooFast, useLocation, type Fix } from '../game/location';
+import { captureFixOk, releaseLocation, startLocation, tooFast, useLocation, waitForFix, type Fix } from '../game/location';
 import { useGame } from '../game/store';
 import type { CaptureOutcome } from '../game/store';
 import { mapApi } from '../map/MapView';
@@ -31,6 +31,7 @@ type Phase =
   | { k: 'live' }
   | { k: 'analyzing' }
   | { k: 'notfound' }
+  | { k: 'nogps' }
   | { k: 'confirm'; shot: Shot }
   | { k: 'reveal'; outcome: CaptureOutcome; cardUrl: string };
 
@@ -189,12 +190,37 @@ export function CaptureScreen() {
 
   const gpsOk = captureFixOk(fix);
   const moving = tooFast(fix);
-  const canShoot = phase.k === 'live' && camera === 'ready' && models === 'ready' && gpsOk && !moving;
+  // Si può scattare appena si vede l'immagine: se la AI o il GPS non sono ancora pronti,
+  // la foto resta ferma e si aspettano dopo (l'animale intanto non scappa più).
+  const gpsBlocked = gpsStatus === 'denied' || gpsStatus === 'unavailable';
+  const canShoot = phase.k === 'live' && camera === 'ready' && models !== 'error' && !gpsBlocked && !moving;
+
+  /** Foto già analizzata che aspetta solo la posizione GPS. */
+  const pendingRef = useRef<Omit<Shot, 'fix' | 'park'> | null>(null);
+  const [waitingGps, setWaitingGps] = useState(false);
+
+  async function finishWithFix() {
+    const pending = pendingRef.current;
+    if (!pending) return;
+    let fixNow = useLocation.getState().fix;
+    if (!captureFixOk(fixNow)) {
+      setPhase({ k: 'analyzing' });
+      setWaitingGps(true);
+      fixNow = await waitForFix(45000);
+      setWaitingGps(false);
+    }
+    if (!fixNow) {
+      setPhase({ k: 'nogps' });
+      return;
+    }
+    pendingRef.current = null;
+    const park = mapApi.isInPark(fixNow.lng, fixNow.lat);
+    setPhase({ k: 'confirm', shot: { ...pending, fix: fixNow, park } });
+  }
 
   async function shoot() {
     const v = videoRef.current;
-    const fixNow = useLocation.getState().fix;
-    if (!v || !v.videoWidth || !canShoot || !captureFixOk(fixNow) || tooFast(fixNow)) return;
+    if (!v || !v.videoWidth || !canShoot || tooFast(useLocation.getState().fix)) return;
     // Lo scatto è istantaneo: si copia il fotogramma, si ferma l'immagine e solo
     // dopo che lo schermo ha mostrato il flash parte l'analisi (che richiede tempo).
     // Tre fotogrammi in rapida successione: si tiene il più nitido (mani che tremano, animale che si muove).
@@ -231,8 +257,8 @@ export function CaptureScreen() {
         return;
       }
       const photos = await makePhotos(frame, analysis.box);
-      const park = mapApi.isInPark(fixNow.lng, fixNow.lat);
-      setPhase({ k: 'confirm', shot: { analysis, ...photos, fix: fixNow, park, blurry } });
+      pendingRef.current = { analysis, ...photos, blurry };
+      await finishWithFix();
     } catch (e) {
       console.error(e);
       setPhase({ k: 'notfound' });
@@ -246,10 +272,11 @@ export function CaptureScreen() {
   }
 
   let status = 'Inquadra un cane o un gatto';
-  if (models === 'loading') status = "Preparo l'occhio magico…";
-  else if (models === 'error') status = 'Errore nel caricare la AI';
+  if (models === 'error') status = 'Errore nel caricare la AI';
   else if (moving) status = 'Ti stai muovendo troppo veloce: fermati per catturare';
-  else if (!gpsOk) status = gpsStatus === 'denied' ? 'Serve la posizione GPS' : 'Aspetto il segnale GPS…';
+  else if (gpsBlocked) status = gpsStatus === 'denied' ? 'Serve la posizione GPS' : 'GPS non disponibile';
+  else if (models === 'loading') status = "Scatta pure! Intanto preparo l'occhio magico…";
+  else if (!gpsOk) status = 'Scatta pure! Cerco il GPS…';
   else if (det && det.area < SMALL_AREA) status = zoom ? 'È piccolo: usa lo zoom qui sotto' : 'È un po\' lontano, ma puoi scattare';
   else if (det) status = `${SPECIES_NAME[det.species].one} trovato! Scatta!`;
 
@@ -266,7 +293,11 @@ export function CaptureScreen() {
   return (
     <div className="capture">
       <video ref={videoRef} playsInline muted autoPlay style={{ visibility: wantCamera ? 'visible' : 'hidden' }} />
-      <canvas ref={frozenRef} className="frozen" style={{ visibility: phase.k === 'analyzing' || phase.k === 'notfound' ? 'visible' : 'hidden' }} />
+      <canvas
+        ref={frozenRef}
+        className="frozen"
+        style={{ visibility: phase.k === 'analyzing' || phase.k === 'notfound' || phase.k === 'nogps' ? 'visible' : 'hidden' }}
+      />
 
       {phase.k === 'live' && camera === 'ready' && (
         <div
@@ -337,9 +368,27 @@ export function CaptureScreen() {
         <div className="scanning">
           <div className="line" />
           <div className="label row">
-            <GameIcon name="search" /> Analizzo la foto…
+            {waitingGps ? (
+              <>
+                <GameIcon name="satellite" /> Foto presa! Cerco la posizione GPS…
+              </>
+            ) : (
+              <>
+                <GameIcon name="search" /> {models === 'ready' ? 'Analizzo la foto…' : "Foto presa! Preparo l'occhio magico…"}
+              </>
+            )}
           </div>
         </div>
+      )}
+
+      {phase.k === 'nogps' && (
+        <Message
+          icon="satellite"
+          title="Niente segnale GPS"
+          text="La foto è pronta, ma serve la posizione per salvarla. Spostati all'aperto, lontano dai palazzi, e riprova."
+          action="Riprova"
+          onAction={() => void finishWithFix()}
+        />
       )}
 
       {phase.k === 'notfound' && (

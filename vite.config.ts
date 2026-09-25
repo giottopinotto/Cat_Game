@@ -64,6 +64,19 @@ export default defineConfig({
           { src: 'icons/icon-512.png', sizes: '512x512', type: 'image/png' },
           { src: 'icons/icon-maskable-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
         ],
+        // Tenendo premuta l'icona dell'app (Android): "Cattura" apre subito la fotocamera.
+        shortcuts: [
+          {
+            name: 'Cattura un animale',
+            short_name: 'Cattura',
+            description: 'Apri subito la fotocamera',
+            url: './#/cattura',
+            icons: [
+              { src: 'icons/shortcut-camera-96.png', sizes: '96x96', type: 'image/png' },
+              { src: 'icons/shortcut-camera-192.png', sizes: '192x192', type: 'image/png' },
+            ],
+          },
+        ],
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,svg,png,woff2}'],
