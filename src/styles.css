@@ -1,20 +1,20 @@
 :root {
-  --bg: #fff6ea;
+  --bg: #f8f4ff;
   --surface: #ffffff;
-  --surface-2: #fdf0e1;
+  --surface-2: #f1eafe;
   --ink: #2a2440;
   --ink-soft: #6f6a86;
-  --line: #efe2d1;
-  --primary: #ff7a2f;
-  --primary-2: #ff9d4a;
-  --primary-dark: #e2600f;
+  --line: #e8ddf8;
+  --primary: #9f7aea;
+  --primary-2: #bea3f7;
+  --primary-dark: #7650cf;
   --teal: #15b3a2;
   --teal-dark: #0e8c7f;
   --danger: #e5484d;
   --gold: #f5a800;
-  --shadow-sm: 0 2px 8px rgba(80, 50, 20, 0.1);
-  --shadow: 0 8px 24px rgba(80, 50, 20, 0.14);
-  --shadow-lg: 0 16px 40px rgba(60, 30, 10, 0.22);
+  --shadow-sm: 0 2px 8px rgba(70, 40, 120, 0.1);
+  --shadow: 0 8px 24px rgba(70, 40, 120, 0.14);
+  --shadow-lg: 0 16px 40px rgba(50, 25, 100, 0.22);
   --radius: 20px;
   --nav-h: 76px;
   --safe-top: env(safe-area-inset-top, 0px);
@@ -262,7 +262,7 @@ p {
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   border-top: 1px solid var(--line);
-  box-shadow: 0 -6px 24px rgba(80, 50, 20, 0.08);
+  box-shadow: 0 -6px 24px rgba(70, 40, 120, 0.08);
 }
 
 .nav-item {
@@ -297,9 +297,9 @@ p {
   display: grid;
   place-items: center;
   color: #fff;
-  background: radial-gradient(circle at 35% 30%, #ffb26b, var(--primary) 60%, var(--primary-dark));
+  background: radial-gradient(circle at 35% 30%, #cdb6fb, var(--primary) 60%, var(--primary-dark));
   border: 5px solid #fff;
-  box-shadow: 0 8px 22px rgba(255, 110, 30, 0.45);
+  box-shadow: 0 8px 22px rgba(130, 90, 220, 0.45);
   transition: transform 0.15s;
 }
 
@@ -473,7 +473,7 @@ p {
   height: 46px;
   flex: none;
   border-radius: 50%;
-  background: linear-gradient(135deg, #ffe0bf, #ffc387);
+  background: linear-gradient(135deg, #ece2ff, #cdb6fb);
   display: grid;
   place-items: center;
   font-size: 24px;
@@ -507,7 +507,7 @@ p {
 .xp-bar {
   height: 8px;
   border-radius: 8px;
-  background: #f0e6da;
+  background: #ece5f6;
   overflow: hidden;
 }
 
@@ -712,7 +712,7 @@ p {
 .rays {
   position: absolute;
   inset: -50%;
-  background: repeating-conic-gradient(from 0deg, rgba(255, 190, 90, 0.18) 0 12deg, transparent 12deg 24deg);
+  background: repeating-conic-gradient(from 0deg, rgba(170, 130, 240, 0.18) 0 12deg, transparent 12deg 24deg);
   animation: spin 14s linear infinite;
   z-index: -1;
 }
@@ -766,7 +766,7 @@ p {
   width: 44px;
   height: 5px;
   border-radius: 5px;
-  background: #e0d2c0;
+  background: #dcd0ee;
   margin: 0 auto 14px;
 }
 
@@ -818,7 +818,7 @@ p {
 
 .card-inner {
   border-radius: 20px;
-  background: #fffdf9;
+  background: #fffdff;
   overflow: hidden;
   position: relative;
 }
@@ -908,7 +908,7 @@ p {
 .stat .bar {
   height: 8px;
   border-radius: 8px;
-  background: #f1e7db;
+  background: #ede6f7;
   overflow: hidden;
 }
 
@@ -985,7 +985,7 @@ p {
 .mini-inner {
   border-radius: 14px;
   overflow: hidden;
-  background: #fffdf9;
+  background: #fffdff;
 }
 
 .mini-photo {
@@ -1063,7 +1063,7 @@ p {
 
 .chip.active {
   border-color: var(--primary);
-  background: #fff3ea;
+  background: #f3edff;
   color: var(--primary-dark);
 }
 
@@ -1084,7 +1084,7 @@ p {
   grid-auto-flow: column;
   grid-auto-columns: 1fr;
   gap: 4px;
-  background: #f3e7d8;
+  background: #eee6fa;
   padding: 4px;
   border-radius: 16px;
 }
@@ -1147,7 +1147,7 @@ p {
   height: 30px;
   flex: none;
   border-radius: 30px;
-  background: #e5d9ca;
+  background: #e0d6f0;
   position: relative;
   transition: background 0.2s;
 }
@@ -1197,14 +1197,14 @@ p {
 
 .swatch.active {
   border-color: var(--primary);
-  background: #fff3ea;
+  background: #f3edff;
 }
 
 .swatch .colors {
   width: 36px;
   height: 36px;
   border-radius: 50%;
-  border: 2px solid #e8ddd0;
+  border: 2px solid #e3daf2;
 }
 
 /* ---------- Cattura ---------- */
@@ -1777,7 +1777,7 @@ p {
 .dex-tile .pic {
   aspect-ratio: 1;
   border-radius: 12px;
-  background: #f6ede2;
+  background: #f1ecf8;
   display: grid;
   place-items: center;
   overflow: hidden;
@@ -1793,7 +1793,7 @@ p {
 .dex-tile .pic svg {
   width: 70%;
   height: 70%;
-  color: #d9cbbb;
+  color: #cfc3e3;
 }
 
 .dex-tile .no {
@@ -1835,7 +1835,7 @@ p {
   height: 92px;
   flex: none;
   border-radius: 20px;
-  background: #f6ede2;
+  background: #f1ecf8;
   display: grid;
   place-items: center;
   overflow: hidden;
@@ -1850,7 +1850,7 @@ p {
 
 .entry-head .pic svg {
   width: 70%;
-  color: #d9cbbb;
+  color: #cfc3e3;
 }
 
 .fact {
@@ -1947,9 +1947,9 @@ p {
 
 /* Non ancora ottenuta: grigio chiaro con bordo tratteggiato. */
 .medal-t0 {
-  background: #f3ebe0;
-  color: #cbbba8;
-  border: 3px dashed #e2d4c3;
+  background: #f1ecf8;
+  color: #baaed4;
+  border: 3px dashed #ddd2ee;
 }
 
 .medal-t1 {
@@ -2057,7 +2057,7 @@ p {
 
 .avatars button.active {
   border-color: var(--primary);
-  background: #fff3ea;
+  background: #f3edff;
 }
 
 /* Missioni */
@@ -2120,7 +2120,7 @@ p {
   z-index: 70;
   display: flex;
   flex-direction: column;
-  background: linear-gradient(180deg, #ffe4c7 0%, var(--bg) 45%);
+  background: linear-gradient(180deg, #e9dcff 0%, var(--bg) 45%);
   padding: calc(var(--safe-top) + 20px) 22px calc(var(--safe-bottom) + 22px);
   overflow-y: auto;
 }
@@ -2139,7 +2139,7 @@ p {
   width: 132px;
   height: 132px;
   margin: 0 auto 18px;
-  filter: drop-shadow(0 12px 24px rgba(255, 110, 30, 0.35));
+  filter: drop-shadow(0 12px 24px rgba(130, 90, 220, 0.35));
   animation: float 3s ease-in-out infinite;
 }
 
@@ -2213,7 +2213,7 @@ p {
   width: 8px;
   height: 8px;
   border-radius: 8px;
-  background: #e6d6c4;
+  background: #ddd1ef;
   transition: all 0.25s;
 }
 
@@ -2390,4 +2390,27 @@ p {
 
 .avatars button {
   padding: 5px;
+}
+
+/* Zoom della fotocamera */
+.zoom-row {
+  display: flex;
+  gap: 8px;
+  background: rgba(0, 0, 0, 0.45);
+  border-radius: 999px;
+  padding: 4px;
+}
+
+.zoom-row button {
+  min-width: 46px;
+  height: 36px;
+  border-radius: 999px;
+  color: #fff;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.zoom-row button.active {
+  background: #fff;
+  color: var(--ink);
 }

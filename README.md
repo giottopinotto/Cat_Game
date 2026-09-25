@@ -81,26 +81,29 @@ https), perché i browser danno accesso a fotocamera e GPS solo su connessioni s
 | `src/map` | Mappa MapLibre, HUD e sfide |
 | `src/capture` | Fotocamera, conferma e rivelazione della carta |
 | `src/screens` | Collezione, album, scheda animale, profilo, benvenuto |
-| `public/models` | Modelli AI (EfficientDet-Lite0 e EfficientNet-Lite0, formato TFLite int8) |
+| `public/models` | Modelli AI (EfficientDet-Lite0, EfficientNet-Lite0, DeepLab v3, formato TFLite) |
 | `eval` | Strumento per misurare la precisione del riconoscimento su immagini di esempio |
 
 ### Come funziona il riconoscimento
 
-1. **EfficientDet-Lite0** trova cani e gatti nell'inquadratura (anche dal vivo, per il mirino).
-2. **EfficientNet-Lite0** (ImageNet) classifica il ritaglio dell'animale fra 118 razze canine e 5 tipi di
-   gatto. Le probabilità vengono pesate per quanto ogni razza è comune per strada in Italia, così nel
-   dubbio vince la razza più probabile (un Labrador, non un raro Flat-coated retriever).
-3. Se la razza è incerta si propone **Meticcio**. Per i gatti europei il **mantello** si stima dai
-   colori dei pixel al centro dell'animale.
+1. **Allo scatto** si prendono 3 fotogrammi in rapida successione e si tiene il più nitido; se la foto è
+   comunque mossa, o l'animale è piccolo, l'app lo segnala (e propone lo zoom, se il telefono lo ha).
+2. **EfficientDet-Lite0** trova cani e gatti nell'inquadratura (anche dal vivo, per il mirino).
+3. **EfficientNet-Lite0** (ImageNet, precisione piena) classifica l'animale guardandolo in tre modi
+   (ritaglio stretto, largo e specchiato) e fa la media. Le probabilità vengono pesate per quanto ogni
+   razza è comune per strada in Italia, così nel dubbio vince la razza più probabile.
+4. Se la razza è incerta si propone **Meticcio**. Per i gatti europei **DeepLab v3** ritaglia la sagoma
+   esatta del gatto e il **mantello** si stima solo dai colori del pelo, senza lo sfondo.
 
-Su 123 immagini di esempio (una per razza) la specie è giusta nel 99% dei casi, la razza proposta nel
-78% e la razza giusta compare tra i suggerimenti nel 92%.
+Su 123 immagini di esempio (una per razza) la specie è giusta nel 99% dei casi, la razza proposta nell'83%
+e la razza giusta compare tra i suggerimenti nel 96%. La prima volta l'app scarica circa 35 MB di modelli,
+poi restano sul telefono.
 
 ## Crediti e licenze
 
 - Mappa: © [OpenStreetMap](https://www.openstreetmap.org/copyright) contributors, stile
   [OpenFreeMap](https://openfreemap.org).
 - Riconoscimento: [MediaPipe](https://developers.google.com/mediapipe) Tasks Vision e modelli
-  EfficientDet-Lite0 / EfficientNet-Lite0 (Apache 2.0).
+  EfficientDet-Lite0 / EfficientNet-Lite0 / DeepLab v3 (Apache 2.0).
 - Mappa interattiva: [MapLibre GL JS](https://maplibre.org) (BSD-3-Clause).
 - Carattere: Fredoka (SIL Open Font License). Icone: Lucide (ISC).

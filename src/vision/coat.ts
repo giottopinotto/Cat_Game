@@ -65,30 +65,63 @@ export function coatColors(data: Uint8ClampedArray, width: number, height: numbe
   return acc;
 }
 
-/**
- * Dalle proporzioni dei colori al mantello più probabile.
- * `tabby` è quanto il classificatore è sicuro di vedere un gatto tigrato (0-1).
- */
-export function coatFromColors(c: CoatColors, tabby = 0): CoatId {
+/** Dalle proporzioni dei colori al mantello più probabile. */
+export function coatFromColors(c: CoatColors): CoatId {
   const { white: W, black: K, orange: O, grey: G, brown: B } = c;
-  if (O > 0.1 && K > 0.12 && W > 0.15) return 'tricolore';
-  if (O > 0.15 && K > 0.22 && W < 0.15) return 'tartarugato';
+  if (O > 0.12 && K > 0.12 && W > 0.15) return 'tricolore';
+  // Tartarugato: chiazze rosse e nere, poco marrone (il soriano ha invece molto marrone).
+  if (O > 0.22 && K > 0.25 && B < 0.3 && W < 0.15) return 'tartarugato';
   if (O > 0.3) return W > 0.18 ? 'rosso_bianco' : 'rosso';
-  if (W > 0.68) return 'bianco';
-  if (K > 0.55 && W < 0.12 && tabby < 0.6) return 'nero';
-  if (K > 0.25 && W > 0.22 && B + G < 0.35) return 'bianco_nero';
-  if (G > 0.45 && B < 0.2 && tabby < 0.5) return 'grigio';
+  if (W > 0.65) return 'bianco';
+  if (K > 0.6 && W < 0.12) return 'nero';
+  if (K > 0.25 && W > 0.22 && B + G < 0.35 && O < 0.1) return 'bianco_nero';
+  // Grigio "tinta unita": se ci sono strisce scure è un tigrato grigio.
+  if (G > 0.5 && K < 0.15 && B < 0.2) return 'grigio';
   return W > 0.2 ? 'tigrato_bianco' : 'tigrato';
 }
 
-/** Analizza un canvas (già ritagliato sul gatto). */
-export function coatFromCanvas(canvas: HTMLCanvasElement, tabby = 0): { coat: CoatId; colors: CoatColors } {
-  const size = 64;
+/** Proporzioni dei colori contando solo i pixel che la maschera indica come "gatto". */
+export function coatColorsMasked(data: Uint8ClampedArray, mask: Uint8Array, cls: number): CoatColors | null {
+  const acc: CoatColors = { white: 0, black: 0, orange: 0, grey: 0, brown: 0 };
+  let inMask = 0;
+  let total = 0;
+  for (let i = 0; i < mask.length; i++) {
+    if (mask[i] !== cls) continue;
+    inMask++;
+    const c = colorOf(data[i * 4], data[i * 4 + 1], data[i * 4 + 2]);
+    if (!c) continue;
+    acc[c]++;
+    total++;
+  }
+  // Maschera troppo piccola: meglio il metodo classico.
+  if (inMask < mask.length * 0.08 || total === 0) return null;
+  for (const k of Object.keys(acc) as ColorName[]) acc[k] /= total;
+  return acc;
+}
+
+/**
+ * Analizza un canvas (già ritagliato sul gatto). Se c'è la maschera della
+ * sagoma usa solo il pelo del gatto, altrimenti un'ellisse al centro.
+ */
+export function coatFromCanvas(
+  canvas: HTMLCanvasElement,
+  masker?: (c: HTMLCanvasElement) => Uint8Array | null,
+  cls = 8,
+): { coat: CoatId; colors: CoatColors; masked: boolean } {
+  const size = 96;
   const small = document.createElement('canvas');
   small.width = size;
   small.height = size;
   const ctx = small.getContext('2d', { willReadFrequently: true })!;
   ctx.drawImage(canvas, 0, 0, size, size);
-  const colors = coatColors(ctx.getImageData(0, 0, size, size).data, size, size);
-  return { coat: coatFromColors(colors, tabby), colors };
+  const data = ctx.getImageData(0, 0, size, size).data;
+  let mask: Uint8Array | null = null;
+  try {
+    mask = masker?.(small) ?? null;
+  } catch {
+    mask = null;
+  }
+  const masked = mask && mask.length === size * size ? coatColorsMasked(data, mask, cls) : null;
+  const colors = masked ?? coatColors(data, size, size);
+  return { coat: coatFromColors(colors), colors, masked: !!masked };
 }

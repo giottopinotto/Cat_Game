@@ -9,6 +9,42 @@ export function grabFrame(video: HTMLVideoElement): HTMLCanvasElement {
   return c;
 }
 
+/**
+ * Nitidezza della parte centrale dell'immagine (varianza del laplaciano):
+ * più è alta, meno la foto è mossa o sfocata.
+ */
+export function sharpness(src: HTMLCanvasElement): number {
+  const size = 256;
+  const c = document.createElement('canvas');
+  c.width = size;
+  c.height = size;
+  const ctx = c.getContext('2d', { willReadFrequently: true })!;
+  // Si guarda il 60% centrale, dove di solito c'è l'animale.
+  const sw = src.width * 0.6;
+  const sh = src.height * 0.6;
+  ctx.drawImage(src, src.width * 0.2, src.height * 0.2, sw, sh, 0, 0, size, size);
+  const d = ctx.getImageData(0, 0, size, size).data;
+  const g = new Float32Array(size * size);
+  for (let i = 0; i < g.length; i++) g[i] = 0.299 * d[i * 4] + 0.587 * d[i * 4 + 1] + 0.114 * d[i * 4 + 2];
+  let sum = 0;
+  let sum2 = 0;
+  let n = 0;
+  for (let y = 1; y < size - 1; y++) {
+    for (let x = 1; x < size - 1; x++) {
+      const i = y * size + x;
+      const l = g[i - 1] + g[i + 1] + g[i - size] + g[i + size] - 4 * g[i];
+      sum += l;
+      sum2 += l * l;
+      n++;
+    }
+  }
+  const mean = sum / n;
+  return sum2 / n - mean * mean;
+}
+
+/** Sotto questa nitidezza la foto è probabilmente mossa. */
+export const BLURRY = 25;
+
 /** Rettangolo con proporzioni `aspect` (larghezza/altezza) centrato sull'animale, dentro la foto. */
 export function framing(W: number, H: number, box: Box, aspect: number, margin: number): Box {
   const cx = box.x + box.w / 2;

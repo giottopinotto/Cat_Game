@@ -13,7 +13,7 @@ function image(parts: [number, [number, number, number]][], size = 40): Uint8Cla
   return data;
 }
 
-const coat = (parts: [number, [number, number, number]][], tabby = 0) => coatFromColors(coatColors(image(parts), 40, 40), tabby);
+const coat = (parts: [number, [number, number, number]][]) => coatFromColors(coatColors(image(parts), 40, 40));
 
 const BLACK: [number, number, number] = [20, 20, 22];
 const WHITE: [number, number, number] = [240, 238, 232];
@@ -38,7 +38,11 @@ describe('mantello del gatto', () => {
     expect(coat([[0.6, BROWN], [0.4, WHITE]])).toBe('tigrato_bianco');
   });
 
-  it('un gatto grigio tigrato resta tigrato se la AI vede le strisce', () => {
-    expect(coat([[1, GREY]], 0.9)).toBe('tigrato');
+  it('un gatto grigio con strisce scure è tigrato, non grigio', () => {
+    expect(coat([[0.7, GREY], [0.3, BLACK]])).toBe('tigrato');
+  });
+
+  it('un soriano (marrone con strisce nere e riflessi rossi) non è tartarugato', () => {
+    expect(coat([[0.42, BROWN], [0.36, BLACK], [0.22, ORANGE]])).toBe('tigrato');
   });
 });

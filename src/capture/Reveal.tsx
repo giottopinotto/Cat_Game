@@ -7,7 +7,7 @@ import { go } from '../router';
 import { AnimalCard } from '../ui/AnimalCard';
 import { formatNumber, Hearts, rarityStyle, vibrate, XpBar } from '../ui/common';
 
-const CONFETTI = ['#ff7a2f', '#15b3a2', '#ffd24a', '#a855f7', '#3b82f6', '#ff5d8f'];
+const CONFETTI = ['#9f7aea', '#15b3a2', '#ffd24a', '#a855f7', '#3b82f6', '#ff5d8f'];
 
 function Burst({ count }: { count: number }) {
   const pieces = useMemo(

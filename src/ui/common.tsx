@@ -87,8 +87,8 @@ export function Logo({ size = 132, className = 'logo' }: { size?: number; classN
     <svg className={className} width={size} height={size} viewBox="0 0 128 128" aria-hidden>
       <defs>
         <linearGradient id="logo-g" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stopColor="#ffb163" />
-          <stop offset="1" stopColor="#ff6f1f" />
+          <stop offset="0" stopColor="#c9b0fb" />
+          <stop offset="1" stopColor="#8b63e0" />
         </linearGradient>
       </defs>
       <rect x="4" y="4" width="120" height="120" rx="36" fill="url(#logo-g)" />

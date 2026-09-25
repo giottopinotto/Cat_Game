@@ -50,7 +50,7 @@ export async function renderCardImage(animal: Animal): Promise<Blob> {
   ctx.fillStyle = g;
   ctx.fill();
   roundRect(ctx, 22, 22, W - 44, H - 44, 44);
-  ctx.fillStyle = '#fffdf9';
+  ctx.fillStyle = '#fffdff';
   ctx.fill();
 
   // Foto.
@@ -105,7 +105,7 @@ export async function renderCardImage(animal: Animal): Promise<Blob> {
     ctx.font = '500 32px Fredoka, sans-serif';
     ctx.fillText(l, 60, y + 24);
     roundRect(ctx, 250, y, 480, 26, 13);
-    ctx.fillStyle = '#f1e7db';
+    ctx.fillStyle = '#ede6f7';
     ctx.fill();
     roundRect(ctx, 250, y, (480 * animal.stats[i]) / 100, 26, 13);
     ctx.fillStyle = color;

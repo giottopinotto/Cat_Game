@@ -1,4 +1,4 @@
-import { FilesetResolver, ImageClassifier, ObjectDetector, type Category } from '@mediapipe/tasks-vision';
+import { FilesetResolver, ImageClassifier, ImageSegmenter, ObjectDetector, type Category } from '@mediapipe/tasks-vision';
 import type { Species } from '../data/types';
 
 // Tutta l'intelligenza artificiale gira sul telefono: i modelli e il runtime
@@ -17,11 +17,19 @@ export interface Detection {
   box: Box;
 }
 
+/** Impostazioni del riconoscimento (modificabili dallo strumento di valutazione in eval/). */
+export const visionConfig = {
+  classifierModel: 'models/efficientnet_lite0_f32.tflite',
+  /** Più ritagli della stessa foto (anche specchiati), mediati: meno errori. */
+  tta: true,
+};
+
 const asset = (path: string) => new URL(path, new URL(import.meta.env.BASE_URL, document.baseURI)).href;
 
 let filesetP: Promise<Awaited<ReturnType<typeof FilesetResolver.forVisionTasks>>> | null = null;
 let detectorP: Promise<ObjectDetector> | null = null;
 let classifierP: Promise<ImageClassifier> | null = null;
+let segmenterP: Promise<ImageSegmenter> | null = null;
 
 function fileset() {
   filesetP ??= FilesetResolver.forVisionTasks(asset('mediapipe/wasm'));
@@ -57,7 +65,7 @@ export function loadClassifier(): Promise<ImageClassifier> {
   classifierP ??= retryable(
     fileset().then((fs) =>
       ImageClassifier.createFromOptions(fs, {
-        baseOptions: { modelAssetPath: asset('models/efficientnet_lite0.tflite'), delegate: 'CPU' },
+        baseOptions: { modelAssetPath: asset(visionConfig.classifierModel), delegate: 'CPU' },
         runningMode: 'IMAGE',
         maxResults: -1,
       }),
@@ -70,9 +78,42 @@ export function loadClassifier(): Promise<ImageClassifier> {
   return classifierP;
 }
 
-/** Carica entrambi i modelli (la prima volta scarica circa 20 MB, poi restano in cache). */
+/** Segmentazione (DeepLab v3): disegna la sagoma esatta di cani e gatti, pixel per pixel. */
+export function loadSegmenter(): Promise<ImageSegmenter> {
+  segmenterP ??= retryable(
+    fileset().then((fs) =>
+      ImageSegmenter.createFromOptions(fs, {
+        baseOptions: { modelAssetPath: asset('models/deeplab_v3.tflite'), delegate: 'CPU' },
+        runningMode: 'IMAGE',
+        outputCategoryMask: true,
+        outputConfidenceMasks: false,
+      }),
+    ),
+    () => {
+      segmenterP = null;
+      filesetP = null;
+    },
+  );
+  return segmenterP;
+}
+
+/** Classi di DeepLab (PASCAL VOC) che ci interessano. */
+export const SEG_CAT = 8;
+export const SEG_DOG = 12;
+
+/** Maschera dell'immagine: per ogni pixel l'indice della classe (0 = sfondo). */
+export function segment(segmenter: ImageSegmenter, source: HTMLCanvasElement): Uint8Array | null {
+  const res = segmenter.segment(source);
+  try {
+    return res.categoryMask ? new Uint8Array(res.categoryMask.getAsUint8Array()) : null;
+  } finally {
+    res.close();
+  }
+}
+
+/** Carica tutti i modelli (la prima volta scarica circa 35 MB, poi restano in cache). */
 export async function loadVision(): Promise<void> {
-  await Promise.all([loadDetector(), loadClassifier()]);
+  await Promise.all([loadDetector(), loadClassifier(), loadSegmenter()]);
 }
 
 // MediaPipe in modalità VIDEO vuole timestamp sempre crescenti.

@@ -21,7 +21,7 @@ const browser = await chromium.launch({ executablePath: process.env.CHROMIUM_PAT
 const page = await browser.newPage();
 for (const v of variants) {
   const inner = v.bleed
-    ? `<div style="width:${v.size}px;height:${v.size}px;background:linear-gradient(#ffb163,#ff6f1f);display:grid;place-items:center">
+    ? `<div style="width:${v.size}px;height:${v.size}px;background:linear-gradient(#c9b0fb,#8b63e0);display:grid;place-items:center">
          <div style="width:${v.size * v.scale}px;height:${v.size * v.scale}px">${paw.replace('<svg', '<svg width="100%" height="100%"')}</div></div>`
     : `<div style="width:${v.size}px;height:${v.size}px">${svg.replace('<svg', '<svg width="100%" height="100%"')}</div>`;
   await page.setViewportSize({ width: v.size, height: v.size });

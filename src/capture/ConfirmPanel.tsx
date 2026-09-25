@@ -132,6 +132,12 @@ export function ConfirmPanel({ shot, onRetake, onDone }: { shot: Shot; onRetake:
         </div>
       </div>
 
+      {shot.blurry && (
+        <p className="panel" style={{ marginTop: 10, fontSize: 14 }}>
+          📷 La foto sembra un po' mossa: se l'AI sbaglia, prova a <b>rifarla</b> tenendo fermo il telefono.
+        </p>
+      )}
+
       {nearby.length > 0 && (
         <>
           <div className="section-title">💞 È un animale che conosci già?</div>

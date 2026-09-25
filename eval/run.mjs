@@ -36,5 +36,6 @@ console.log(`Specie corretta:        ${pct(results.filter((r) => r.speciesOk).le
 console.log(`Razza proposta giusta:  ${pct(dogs.filter((r) => r.suggested === r.expected).length, dogs.length)}`);
 console.log(`Razza tra i suggeriti:  ${pct(dogs.filter((r) => r.inSuggestions).length, dogs.length)}`);
 console.log(`Tempo medio:            ${Math.round(results.reduce((s, r) => s + r.ms, 0) / results.length)} ms`);
+for (const r of results.filter((r) => r.expected === null || r.coat)) console.log(`  🐱 ${r.label}: ${r.suggested} mantello=${r.coat} sagoma=${r.coatMasked} ${JSON.stringify(Object.fromEntries(Object.entries(r.colors ?? {}).map(([k, v]) => [k, +v.toFixed(2)])))}`);
 for (const r of results.filter((r) => !r.speciesOk || (r.expected?.startsWith('dog-') && r.suggested !== r.expected)))
   console.log(`  ✗ ${r.label} → ${r.suggested}`);

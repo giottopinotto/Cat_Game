@@ -9,7 +9,7 @@ import { back } from '../router';
 import { vibrate } from '../ui/common';
 import { analyzePhoto, type Analysis } from '../vision/analyze';
 import { detectAnimals, downscale, loadDetector, loadVision, pickMain, scaleDetections, type Box } from '../vision/engine';
-import { grabFrame, makePhotos } from '../vision/photo';
+import { BLURRY, grabFrame, makePhotos, sharpness } from '../vision/photo';
 import { ConfirmPanel } from './ConfirmPanel';
 import { Reveal } from './Reveal';
 
@@ -20,6 +20,8 @@ export interface Shot {
   cardUrl: string;
   fix: Fix;
   park: boolean;
+  /** La foto sembra mossa o sfocata. */
+  blurry: boolean;
 }
 
 type Phase =
@@ -36,7 +38,19 @@ interface LiveDet {
   box: Box;
   species: Species;
   at: number;
+  /** Quanta parte dell'inquadratura occupa l'animale (0-1). */
+  area: number;
 }
+
+interface ZoomRange {
+  min: number;
+  max: number;
+  value: number;
+}
+
+const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
+/** Sotto questa frazione dell'inquadratura l'animale è piccolo: meglio lo zoom. */
+const SMALL_AREA = 0.035;
 
 /** Riquadro della foto → coordinate sullo schermo (video in modalità "cover"). */
 function toScreen(box: Box, video: HTMLVideoElement): Box {
@@ -52,12 +66,14 @@ function toScreen(box: Box, video: HTMLVideoElement): Box {
 
 export function CaptureScreen() {
   const videoRef = useRef<HTMLVideoElement>(null);
+  const frozenRef = useRef<HTMLCanvasElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const [phase, setPhase] = useState<Phase>({ k: 'live' });
   const [camera, setCamera] = useState<CameraState>('starting');
   const [models, setModels] = useState<ModelState>('loading');
   const [det, setDet] = useState<LiveDet | null>(null);
   const [flash, setFlash] = useState(0);
+  const [zoom, setZoom] = useState<ZoomRange | null>(null);
   const { fix, status: gpsStatus } = useLocation();
   const wantCamera = phase.k === 'live' || phase.k === 'analyzing' || phase.k === 'notfound';
 
@@ -94,6 +110,10 @@ export function CaptureScreen() {
         const v = videoRef.current!;
         v.srcObject = stream;
         await v.play().catch(() => {});
+        // Zoom ottico/digitale del telefono, se disponibile (Chrome su Android).
+        const track = stream.getVideoTracks()[0];
+        const caps = (track.getCapabilities?.() ?? {}) as { zoom?: { min: number; max: number } };
+        if (caps.zoom && caps.zoom.max >= 1.5) setZoom({ min: caps.zoom.min, max: Math.min(caps.zoom.max, 5), value: caps.zoom.min });
         setCamera('ready');
       } catch (e) {
         const name = (e as DOMException).name;
@@ -129,7 +149,12 @@ export function CaptureScreen() {
             if (main) {
               if (!announced) vibrate(15);
               announced = true;
-              setDet({ box: toScreen(main.box, v), species: main.species, at: t });
+              setDet({
+                box: toScreen(main.box, v),
+                species: main.species,
+                at: t,
+                area: (main.box.w * main.box.h) / (v.videoWidth * v.videoHeight),
+              });
             } else setDet((d) => (d && t - d.at > 700 ? null : d));
           } catch {
             /* un fotogramma perso non è un problema */
@@ -155,12 +180,27 @@ export function CaptureScreen() {
     if (!v || !v.videoWidth || !canShoot || !captureFixOk(fixNow) || tooFast(fixNow)) return;
     // Lo scatto è istantaneo: si copia il fotogramma, si ferma l'immagine e solo
     // dopo che lo schermo ha mostrato il flash parte l'analisi (che richiede tempo).
+    // Tre fotogrammi in rapida successione: si tiene il più nitido (mani che tremano, animale che si muove).
+    // Lo schermo si "ferma" subito sul primo fotogramma; gli altri due si prendono dietro le quinte.
     vibrate(30);
-    const frame = grabFrame(v);
-    v.pause();
+    const frames = [grabFrame(v)];
+    const frozen = frozenRef.current;
+    if (frozen) {
+      frozen.width = frames[0].width;
+      frozen.height = frames[0].height;
+      frozen.getContext('2d')!.drawImage(frames[0], 0, 0);
+    }
     setFlash((n) => n + 1);
     setPhase({ k: 'analyzing' });
+    for (let i = 0; i < 2; i++) {
+      await wait(45);
+      frames.push(grabFrame(v));
+    }
+    v.pause();
     await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+    const scored = frames.map((f) => ({ f, s: sharpness(f) })).sort((a, b) => b.s - a.s);
+    const frame = scored[0].f;
+    const blurry = scored[0].s < BLURRY;
     try {
       const analysis = await analyzePhoto(frame);
       if (!analysis) {
@@ -170,7 +210,7 @@ export function CaptureScreen() {
       }
       const photos = await makePhotos(frame, analysis.box);
       const park = mapApi.isInPark(fixNow.lng, fixNow.lat);
-      setPhase({ k: 'confirm', shot: { analysis, ...photos, fix: fixNow, park } });
+      setPhase({ k: 'confirm', shot: { analysis, ...photos, fix: fixNow, park, blurry } });
     } catch (e) {
       console.error(e);
       setPhase({ k: 'notfound' });
@@ -188,11 +228,23 @@ export function CaptureScreen() {
   else if (models === 'error') status = 'Errore nel caricare la AI';
   else if (moving) status = '🚗 Ti stai muovendo troppo veloce: fermati per catturare';
   else if (!gpsOk) status = gpsStatus === 'denied' ? 'Serve la posizione GPS' : 'Aspetto il segnale GPS…';
+  else if (det && det.area < SMALL_AREA) status = zoom ? '🔍 È piccolo: usa lo zoom qui sotto' : '🔍 È un po\' lontano, ma puoi scattare';
   else if (det) status = `${SPECIES_NAME[det.species].emoji} ${SPECIES_NAME[det.species].one} trovato! Scatta!`;
+
+  function applyZoom(value: number) {
+    const track = streamRef.current?.getVideoTracks()[0];
+    if (!track || !zoom) return;
+    const z = Math.min(zoom.max, Math.max(zoom.min, value));
+    void track.applyConstraints({ advanced: [{ zoom: z } as MediaTrackConstraintSet] }).then(
+      () => setZoom({ ...zoom, value: z }),
+      () => {},
+    );
+  }
 
   return (
     <div className="capture">
       <video ref={videoRef} playsInline muted autoPlay style={{ visibility: wantCamera ? 'visible' : 'hidden' }} />
+      <canvas ref={frozenRef} className="frozen" style={{ visibility: phase.k === 'analyzing' || phase.k === 'notfound' ? 'visible' : 'hidden' }} />
 
       {phase.k === 'live' && camera === 'ready' && (
         <div
@@ -223,6 +275,15 @@ export function CaptureScreen() {
 
       {phase.k === 'live' && (
         <div className="capture-bottom">
+          {zoom && (
+            <div className="zoom-row" role="group" aria-label="Zoom">
+              {[1, 2, 3].filter((z) => z <= zoom.max + 0.01).map((z) => (
+                <button key={z} className={Math.abs(zoom.value - Math.max(z, zoom.min)) < 0.05 ? 'active' : ''} onClick={() => applyZoom(z)}>
+                  {z}×
+                </button>
+              ))}
+            </div>
+          )}
           <button className={`shutter ${det && canShoot ? 'ready' : ''}`} disabled={!canShoot} aria-label="Scatta" onClick={shoot}>
             <span />
           </button>
@@ -277,7 +338,7 @@ export function CaptureScreen() {
         <Message
           emoji="🤖"
           title="AI non caricata"
-          text="Serve una connessione a internet per scaricare il riconoscimento la prima volta (circa 20 MB)."
+          text="Serve una connessione a internet per scaricare il riconoscimento la prima volta (circa 35 MB, una volta sola: meglio con il Wi-Fi)."
           action="Riprova"
           onAction={loadModels}
         />

@@ -1,8 +1,23 @@
+import type { ImageClassifier } from '@mediapipe/tasks-vision';
 import { euCoatEntryId } from '../data/cats';
 import { getEntry, LABEL_TO_ENTRY } from '../data/entries';
 import type { CoatId, Rarity, Species } from '../data/types';
 import { coatFromCanvas, type CoatColors } from './coat';
-import { classify, cropCanvas, detectAnimals, downscale, loadClassifier, loadDetector, pickMain, scaleDetections, type Box } from './engine';
+import {
+  classify,
+  cropCanvas,
+  detectAnimals,
+  downscale,
+  loadClassifier,
+  loadDetector,
+  loadSegmenter,
+  segment,
+  SEG_CAT,
+  pickMain,
+  scaleDetections,
+  visionConfig,
+  type Box,
+} from './engine';
 import { CAT_LABELS, DOG_LABELS, WILD_DOG_LABELS } from './labels';
 
 export interface Suggestion {
@@ -23,6 +38,8 @@ export interface Analysis {
   suggested: string;
   coat?: CoatId;
   coatColors?: CoatColors;
+  /** True se il mantello è stato stimato sulla sagoma esatta del gatto. */
+  coatMasked?: boolean;
 }
 
 const METICCIO = 'dog-meticcio';
@@ -84,6 +101,30 @@ function catSuggestions(scores: Map<string, number>, coat: CoatId) {
   return { suggestions, suggested };
 }
 
+/** Specchia orizzontalmente un canvas. */
+function mirrored(src: HTMLCanvasElement): HTMLCanvasElement {
+  const c = document.createElement('canvas');
+  c.width = src.width;
+  c.height = src.height;
+  const ctx = c.getContext('2d')!;
+  ctx.translate(c.width, 0);
+  ctx.scale(-1, 1);
+  ctx.drawImage(src, 0, 0);
+  return c;
+}
+
+/**
+ * Classifica più "viste" dello stesso animale (ritaglio stretto, largo e
+ * specchiato) e fa la media: il risultato è più stabile di una sola occhiata.
+ */
+function classifyTTA(classifier: ImageClassifier, photo: HTMLCanvasElement, box: Box): Map<string, number> {
+  const tight = cropCanvas(photo, box, 0.06);
+  const views = [tight, mirrored(tight), cropCanvas(photo, box, 0.22)];
+  const sum = new Map<string, number>();
+  for (const v of views) for (const [k, p] of classify(classifier, v)) sum.set(k, (sum.get(k) ?? 0) + p / views.length);
+  return sum;
+}
+
 /**
  * Analizza una foto: trova il cane o il gatto, propone la razza (o il mantello)
  * e restituisce null se non c'è nessun animale riconoscibile.
@@ -104,7 +145,7 @@ export async function analyzePhoto(photo: HTMLCanvasElement): Promise<Analysis |
     crop = cropCanvas(photo, box, 0);
   }
 
-  const scores = classify(classifier, crop);
+  const scores = main && visionConfig.tta ? classifyTTA(classifier, photo, box) : classify(classifier, crop);
   const dogP = sum(scores, DOG_LABELS) + sum(scores, WILD_DOG_LABELS) * 0.5;
   const catP = sum(scores, CAT_LABELS);
 
@@ -128,7 +169,11 @@ export async function analyzePhoto(photo: HTMLCanvasElement): Promise<Analysis |
 
   if (species === 'dog') return { species, box, confidence, ...dogSuggestions(scores) };
 
-  const tabby = (scores.get('tabby') ?? 0) + (scores.get('tiger cat') ?? 0) + (scores.get('Egyptian cat') ?? 0);
-  const { coat, colors } = coatFromCanvas(cropCanvas(photo, box, 0), tabby / (catP || 1));
-  return { species, box, confidence, coat, coatColors: colors, ...catSuggestions(scores, coat) };
+  const segmenter = await loadSegmenter().catch(() => null);
+  const { coat, colors, masked } = coatFromCanvas(
+    cropCanvas(photo, box, 0.04),
+    segmenter ? (c) => segment(segmenter, c) : undefined,
+    SEG_CAT,
+  );
+  return { species, box, confidence, coat, coatColors: colors, coatMasked: masked, ...catSuggestions(scores, coat) };
 }

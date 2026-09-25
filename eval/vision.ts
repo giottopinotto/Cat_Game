@@ -2,7 +2,7 @@
 // Vedi eval/run.mjs.
 import { LABEL_TO_ENTRY } from '../src/data/entries';
 import { analyzePhoto } from '../src/vision/analyze';
-import { loadVision } from '../src/vision/engine';
+import { loadVision, visionConfig } from '../src/vision/engine';
 import { CAT_LABELS } from '../src/vision/labels';
 
 async function toCanvas(url: string): Promise<HTMLCanvasElement> {
@@ -15,6 +15,10 @@ async function toCanvas(url: string): Promise<HTMLCanvasElement> {
   c.getContext('2d')!.drawImage(img, 0, 0);
   return c;
 }
+
+const params = new URLSearchParams(location.search);
+if (params.get('model')) visionConfig.classifierModel = `models/${params.get('model')}`;
+visionConfig.tta = params.get('tta') !== '0';
 
 Object.assign(window, {
   ready: loadVision().then(() => true),
@@ -32,6 +36,8 @@ Object.assign(window, {
       suggested: a?.suggested ?? null,
       inSuggestions: !!expected && !!a?.suggestions.some((s) => s.entryId === expected),
       coat: a?.coat,
+      coatMasked: a?.coatMasked,
+      colors: a?.coatColors,
     };
   },
 });

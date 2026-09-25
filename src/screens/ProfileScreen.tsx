@@ -218,7 +218,7 @@ export function ProfileScreen() {
           <p className="muted" style={{ fontSize: 14, lineHeight: 1.5 }}>
             Mappa: © OpenStreetMap contributors, stile OpenFreeMap.
             <br />
-            Riconoscimento: MediaPipe (EfficientDet-Lite0, EfficientNet-Lite0), licenza Apache 2.0.
+            Riconoscimento: MediaPipe (EfficientDet-Lite0, EfficientNet-Lite0, DeepLab v3), licenza Apache 2.0.
             <br />
             Carattere: Fredoka (SIL Open Font License).
           </p>
