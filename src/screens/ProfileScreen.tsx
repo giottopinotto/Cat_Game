@@ -1,19 +1,27 @@
-import { Download, Info, Pencil, ShieldCheck, Smartphone, Trash2, Upload } from 'lucide-react';
+import { CalendarDays, Download, House, Info, Moon, Pencil, ShieldCheck, Smartphone, Trash2, Upload, Vibrate, Volume2 } from 'lucide-react';
 import { useMemo, useRef, useState } from 'react';
 import { BADGES, badgeTier, TIER_NAMES, tierText, type BadgeSummary } from '../game/badges';
-import { exportBackup, importBackup } from '../game/backup';
+import { importBackup } from '../game/backup';
 import { wipeAll } from '../game/db';
 import { formatDistance } from '../game/geo';
 import { levelInfo, levelTitle } from '../game/progress';
-import { today, useGame } from '../game/store';
+import { today, useGame, type ThemeChoice } from '../game/store';
+import { go } from '../router';
+import { saveBackup } from '../ui/backupActions';
+import { HomeZoneSheet } from './HomeZoneSheet';
 import { badgeSummary, streaks } from '../game/summary';
 import { isIOS, isStandalone, promptInstall, useInstall } from '../pwa';
-import { formatNumber, Sheet, XpBar } from '../ui/common';
+import { formatNumber, Sheet, Switch, XpBar } from '../ui/common';
 import { AvatarArt, GameIcon, Medal } from '../ui/icons';
 import { AVATARS, Rules } from '../ui/Rules';
-import { downloadBlob } from '../ui/shareCard';
 
-type Open = null | 'edit' | 'rules' | 'about' | 'wipe' | 'install' | { badge: string };
+type Open = null | 'edit' | 'rules' | 'about' | 'wipe' | 'install' | 'home' | { badge: string };
+
+const THEMES: { id: ThemeChoice; label: string }[] = [
+  { id: 'auto', label: 'Automatico' },
+  { id: 'light', label: 'Chiaro' },
+  { id: 'dark', label: 'Scuro' },
+];
 
 export function ProfileScreen() {
   const player = useGame((s) => s.player);
@@ -31,23 +39,8 @@ export function ProfileScreen() {
   const streak = streaks(player.activeDays, day);
   const cats = animals.filter((a) => a.species === 'cat').length;
 
-  async function doExport() {
-    try {
-      const { blob, filename } = await exportBackup();
-      const file = new File([blob], filename, { type: 'application/json' });
-      if (navigator.canShare?.({ files: [file] })) {
-        try {
-          await navigator.share({ files: [file], title: 'Backup Zampe in Giro' });
-          return;
-        } catch (e) {
-          if ((e as DOMException).name === 'AbortError') return;
-        }
-      }
-      downloadBlob(blob, filename);
-    } catch {
-      toast('alert', 'Backup non riuscito');
-    }
-  }
+  const updateSettings = useGame((s) => s.updateSettings);
+  const settings = player.settings;
 
   async function doImport(f: File | undefined) {
     if (!f) return;
@@ -140,7 +133,58 @@ export function ProfileScreen() {
             Installa l'app sul telefono
           </button>
         )}
-        <button onClick={doExport}>
+        <button onClick={() => go('diario')}>
+          <span className="ico">
+            <CalendarDays size={19} />
+          </span>
+          Diario delle uscite
+        </button>
+        <button onClick={() => setOpen('home')}>
+          <span className="ico">
+            <House size={19} />
+          </span>
+          <span className="grow">
+            Zona privata di casa
+            <div className="muted" style={{ fontSize: 13 }}>
+              {player.home ? 'Attiva: le catture vicino a casa non salvano la posizione precisa' : 'Nasconde la posizione delle catture vicino a casa'}
+            </div>
+          </span>
+        </button>
+        <button onClick={() => updateSettings({ sound: !settings.sound })}>
+          <span className="ico">
+            <Volume2 size={19} />
+          </span>
+          <span className="grow">Suoni</span>
+          <Switch on={settings.sound} />
+        </button>
+        <button onClick={() => updateSettings({ vibration: !settings.vibration })}>
+          <span className="ico">
+            <Vibrate size={19} />
+          </span>
+          <span className="grow">Vibrazione</span>
+          <Switch on={settings.vibration} />
+        </button>
+        <div className="menu-block">
+          <div className="row" style={{ gap: 12, marginBottom: 10 }}>
+            <span className="ico">
+              <Moon size={19} />
+            </span>
+            <span className="grow">
+              Tema
+              <div className="muted" style={{ fontSize: 13 }}>
+                In automatico diventa scuro la sera (dalle 20 alle 7)
+              </div>
+            </span>
+          </div>
+          <div className="segmented">
+            {THEMES.map((t) => (
+              <button key={t.id} className={settings.theme === t.id ? 'active' : ''} onClick={() => updateSettings({ theme: t.id })}>
+                {t.label}
+              </button>
+            ))}
+          </div>
+        </div>
+        <button onClick={() => void saveBackup()}>
           <span className="ico">
             <Download size={19} />
           </span>
@@ -148,6 +192,7 @@ export function ProfileScreen() {
             Salva un backup
             <div className="muted" style={{ fontSize: 13 }}>
               I dati sono solo su questo telefono: fai un backup ogni tanto! Contiene foto e luoghi delle catture: tienilo per te.
+              {player.lastBackupAt > 0 && ` Ultimo: ${new Date(player.lastBackupAt).toLocaleDateString('it-IT')}.`}
             </div>
           </span>
         </button>
@@ -179,6 +224,7 @@ export function ProfileScreen() {
       </div>
 
       {open === 'edit' && <EditProfile onClose={() => setOpen(null)} />}
+      {open === 'home' && <HomeZoneSheet onClose={() => setOpen(null)} />}
       {open === 'rules' && (
         <Sheet onClose={() => setOpen(null)}>
           <h2>Regole d'oro</h2>
@@ -226,7 +272,9 @@ export function ProfileScreen() {
             <br />
             Riconoscimento: MediaPipe (EfficientDet-Lite0, EfficientNet-Lite0, DeepLab v3), licenza Apache 2.0.
             <br />
-            Carattere: Fredoka (SIL Open Font License).
+            Carattere: Fredoka (SIL Open Font License). Icone: Lucide (ISC).
+            <br />
+            QR code: uqr (MIT) e jsQR (Apache 2.0).
           </p>
         </Sheet>
       )}

@@ -3,7 +3,9 @@ import { RARITIES, type Animal, type Encounter, type Rarity, type Stats } from '
 import { getAllPhotos, loadAnimals, kvGet, replaceAll, type PhotoRecord } from './db';
 import { AVATAR_IDS } from '../ui/avatars';
 import { forgetPhotos } from './photos';
-import { normalizePlayer, type PlayerData } from './store';
+import { cleanFriendCard, MAX_FRIEND_CARDS, type FriendCard } from './friends';
+import { isHomeZone } from './privacy';
+import { DEFAULT_SETTINGS, normalizePlayer, type PlayerData, type ThemeChoice } from './store';
 
 // Tutti i dati vivono solo sul telefono: il backup permette di salvarli in un
 // file e ripristinarli (es. cambiando telefono).
@@ -71,7 +73,7 @@ function cleanEncounter(e: unknown): Encounter | null {
   const x = e as Partial<Encounter> | null;
   if (!x || !isNum(x.at) || !isNum(x.lat) || !isNum(x.lng) || !isId(x.photoId)) return null;
   if (Math.abs(x.lat) > 90 || Math.abs(x.lng) > 180) return null;
-  return { at: x.at, lat: x.lat, lng: x.lng, park: x.park === true || undefined, photoId: x.photoId };
+  return { at: x.at, lat: x.lat, lng: x.lng, park: x.park === true || undefined, priv: x.priv === true || undefined, photoId: x.photoId };
 }
 
 function cleanAnimal(a: unknown): Animal | null {
@@ -116,6 +118,24 @@ function cleanPlayer(p: unknown): PlayerData {
     badgeTiers: Object.fromEntries(
       Object.entries(x.badgeTiers ?? {}).filter(([k, v]) => typeof k === 'string' && isNum(v)).map(([k, v]) => [k, clamp(v, 0, 3, 0)]),
     ),
+    home: isHomeZone(x.home) ? { lat: x.home.lat, lng: x.home.lng, r: x.home.r } : null,
+    settings: {
+      sound: typeof x.settings?.sound === 'boolean' ? x.settings.sound : DEFAULT_SETTINGS.sound,
+      vibration: typeof x.settings?.vibration === 'boolean' ? x.settings.vibration : DEFAULT_SETTINGS.vibration,
+      theme: (['auto', 'light', 'dark'] as ThemeChoice[]).includes(x.settings?.theme as ThemeChoice) ? x.settings!.theme : DEFAULT_SETTINGS.theme,
+    },
+    lastBackupAt: clamp(x.lastBackupAt, 0, Date.now() + 86400000, 0),
+    backupNagAt: clamp(x.backupNagAt, 0, Date.now() + 86400000, 0),
+    dailyWalk: Object.fromEntries(
+      Object.entries(x.dailyWalk ?? {})
+        .filter(([k, v]) => /^\d{4}-\d{2}-\d{2}$/.test(k) && isNum(v))
+        .slice(-400)
+        .map(([k, v]) => [k, clamp(v, 0, 1e6, 0)]),
+    ),
+    friends: (Array.isArray(x.friends) ? x.friends : [])
+      .slice(0, MAX_FRIEND_CARDS)
+      .map(cleanFriendCard)
+      .filter((f): f is FriendCard => !!f),
   };
 }
 

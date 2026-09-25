@@ -27,6 +27,13 @@ e i dati restano sul telefono.
 - 👟 **Km a piedi e zone esplorate**: gli spostamenti in auto o in bus non valgono.
 - 💾 **Backup** su file e ripristino (utile se cambi telefono), **condivisione** della carta come
   immagine.
+- 🏠 **Zona privata di casa**: vicino a casa le catture non salvano la posizione precisa, solo una zona
+  con il centro spostato a caso. Anche le zone esplorate lì non vengono segnate.
+- 🤝 **Carte degli amici**: si scambiano di persona con un QR code, senza internet. Il QR contiene solo
+  nome, razza e rarità (niente foto né posizione); rarità e statistiche vengono ricalcolate da chi lo riceve.
+- 🎉 **Eventi a tempo** (Giornata degli animali, Halloween, Natale, domeniche al parco...) con XP extra.
+- 📅 **Diario** delle uscite: calendario con animali visti e km fatti ogni giorno.
+- 🌙 **Tema scuro** la sera (o sempre), **suoni** e vibrazioni disattivabili, **promemoria del backup**.
 - 📱 **Installabile** sulla schermata Home (Android e iPhone). Dopo il primo utilizzo si può catturare
   anche senza connessione (la mappa mostra solo le zone già viste).
 
@@ -107,3 +114,4 @@ poi restano sul telefono.
   EfficientDet-Lite0 / EfficientNet-Lite0 / DeepLab v3 (Apache 2.0).
 - Mappa interattiva: [MapLibre GL JS](https://maplibre.org) (BSD-3-Clause).
 - Carattere: Fredoka (SIL Open Font License). Icone: Lucide (ISC).
+- QR code: [uqr](https://github.com/unjs/uqr) (MIT) e [jsQR](https://github.com/cozmo/jsQR) (Apache 2.0).

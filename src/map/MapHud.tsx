@@ -7,6 +7,8 @@ import { usePhoto } from '../game/photos';
 import { dayKey, levelInfo } from '../game/progress';
 import { useGame } from '../game/store';
 import { go } from '../router';
+import { activeEvents } from '../game/events';
+import { backupDue, saveBackup } from '../ui/backupActions';
 import { XpBar } from '../ui/common';
 import { AvatarArt, GameIcon, IconBubble } from '../ui/icons';
 import { MissionsSheet } from './MissionsSheet';
@@ -23,6 +25,10 @@ export function MapHud() {
   const [dismissed, setDismissed] = useState<string[]>([]);
   const lvl = levelInfo(player.xp);
   const done = player.missions.list.filter(missionDone).length;
+  const events = activeEvents();
+  const snoozeBackup = useGame((s) => s.snoozeBackup);
+  const lastCaptureAt = animals.reduce((m, a) => Math.max(m, a.encounters[a.encounters.length - 1].at), 0);
+  const showBackup = backupDue(player, lastCaptureAt, animals.length);
 
   // Un animale già conosciuto qui vicino, non ancora salutato oggi.
   const nearby = useMemo(() => {
@@ -83,6 +89,30 @@ export function MapHud() {
               Riprova
             </button>
           )}
+        </div>
+      )}
+
+      {events.length > 0 && status === 'ok' && (
+        <button className="event-chip" onClick={() => setShowMissions(true)}>
+          <GameIcon name={events[0].icon} size={18} />
+          <span>
+            <b>{events[0].name}</b> · {events[0].desc}
+          </span>
+        </button>
+      )}
+
+      {showBackup && !nearby && (
+        <div className="nearby-hint backup-hint">
+          <IconBubble name="shield" size={40} tone="mint" />
+          <button className="grow" style={{ textAlign: 'left' }} onClick={() => void saveBackup()}>
+            <b>Salva un backup</b>
+            <div className="muted" style={{ fontSize: 13 }}>
+              Hai nuove catture: salvale in un file, così non le perdi se cambi telefono
+            </div>
+          </button>
+          <button aria-label="Più tardi" onClick={snoozeBackup} className="muted">
+            <X size={20} />
+          </button>
         </div>
       )}
 

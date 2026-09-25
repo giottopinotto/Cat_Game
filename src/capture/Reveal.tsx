@@ -7,6 +7,7 @@ import { go } from '../router';
 import { AnimalCard } from '../ui/AnimalCard';
 import { formatNumber, Logo, rarityStyle, vibrate, XpBar } from '../ui/common';
 import { GameIcon, Hearts, IconBubble } from '../ui/icons';
+import { play } from '../ui/sound';
 
 const CONFETTI = ['#9f7aea', '#15b3a2', '#ffd24a', '#a855f7', '#3b82f6', '#ff5d8f'];
 
@@ -49,6 +50,7 @@ export function Reveal({ outcome, cardUrl, onAgain }: { outcome: CaptureOutcome;
   useEffect(() => {
     if (opened) return;
     vibrate(r >= 3 ? [30, 60, 30, 60, 30] : 25);
+    play('shake');
     const t = setTimeout(() => setOpened(true), 1300 + r * 250);
     return () => clearTimeout(t);
   }, [opened, r]);
@@ -56,6 +58,8 @@ export function Reveal({ outcome, cardUrl, onAgain }: { outcome: CaptureOutcome;
   useEffect(() => {
     if (!opened) return;
     vibrate(r >= 3 ? [60, 40, 60, 40, 120] : [50, 30, 80]);
+    play(isNew ? 'open' : 'reward');
+    if (isNew && r >= 2) play('rare');
     const t = setTimeout(() => setBar(after), 900 + outcome.rewards.length * 150);
     return () => clearTimeout(t);
   }, [opened]); // eslint-disable-line react-hooks/exhaustive-deps

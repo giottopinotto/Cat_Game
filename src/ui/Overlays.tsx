@@ -1,7 +1,9 @@
 import { useGame } from '../game/store';
 import { TIER_NAMES, tierText } from '../game/badges';
 import { levelTitle } from '../game/progress';
+import { useEffect } from 'react';
 import { GameIcon, IconBubble, Medal } from './icons';
+import { play } from './sound';
 
 export function Toasts() {
   const toasts = useGame((s) => s.toasts);
@@ -21,6 +23,9 @@ export function Toasts() {
 export function Celebrations() {
   const c = useGame((s) => s.celebrations[0]);
   const dismiss = useGame((s) => s.dismissCelebration);
+  useEffect(() => {
+    if (c) play('level');
+  }, [c]);
   if (!c) return null;
   return (
     <div className="overlay" onClick={dismiss}>

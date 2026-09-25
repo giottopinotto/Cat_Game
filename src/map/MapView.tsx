@@ -12,6 +12,7 @@ import { useGame } from '../game/store';
 import { go } from '../router';
 import { avatarSvg } from '../ui/avatars';
 import { IconBubble } from '../ui/icons';
+import { useTheme } from '../ui/theme';
 
 // Il worker di MapLibre va impacchettato da Vite insieme alle sue dipendenze.
 maplibregl.setWorkerUrl(mapWorkerUrl);
@@ -108,7 +109,9 @@ const EMPTY: GeoJSON.FeatureCollection = { type: 'FeatureCollection', features: 
 // Si ricolorano i livelli della mappa in base al tipo e al nome; se un livello
 // non esiste o non accetta il colore, lo si lascia com'è.
 
-const PALETTE = {
+type Palette = typeof DAY;
+
+const DAY = {
   land: '#f4effb',
   residential: '#efe8f8',
   park: '#d3f0dd',
@@ -121,6 +124,24 @@ const PALETTE = {
   casing: '#d9cdef',
   rail: '#cbbfe0',
   label: '#5a5078',
+  halo: '#ffffff',
+};
+
+// Di sera: viola notte, con strade chiare e parchi verde scuro.
+const NIGHT: Palette = {
+  land: '#1f1a33',
+  residential: '#241e3b',
+  park: '#1f3a33',
+  wood: '#1c3830',
+  water: '#1b2b4a',
+  building: '#2e2749',
+  buildingTop: '#352d55',
+  road: '#4a3f70',
+  roadMajor: '#5b4e86',
+  casing: '#2a2345',
+  rail: '#3d3560',
+  label: '#cfc3ee',
+  halo: '#1f1a33',
 };
 
 function setPaint(map: maplibregl.Map, id: string, prop: string, value: string | number) {
@@ -131,7 +152,8 @@ function setPaint(map: maplibregl.Map, id: string, prop: string, value: string |
   }
 }
 
-function applyGameStyle(map: maplibregl.Map) {
+function applyGameStyle(map: maplibregl.Map, dark: boolean) {
+  const PALETTE = dark ? NIGHT : DAY;
   for (const layer of map.getStyle().layers ?? []) {
     const id = layer.id;
     const name = id.toLowerCase();
@@ -159,12 +181,13 @@ function applyGameStyle(map: maplibregl.Map) {
         break;
       case 'symbol':
         setPaint(map, id, 'text-color', PALETTE.label);
-        setPaint(map, id, 'text-halo-color', '#ffffff');
+        setPaint(map, id, 'text-halo-color', PALETTE.halo);
         break;
       case 'raster':
         // Mappa di riserva (immagini): la si ammorbidisce verso il pastello.
         setPaint(map, id, 'raster-saturation', -0.35);
-        setPaint(map, id, 'raster-brightness-min', 0.12);
+        setPaint(map, id, 'raster-brightness-min', dark ? 0 : 0.12);
+        setPaint(map, id, 'raster-brightness-max', dark ? 0.45 : 1);
         setPaint(map, id, 'raster-hue-rotate', 12);
         break;
     }
@@ -175,6 +198,14 @@ function addGameLayers(map: maplibregl.Map) {
   if (map.getSource('zones')) return;
   map.addSource('zones', { type: 'geojson', data: EMPTY });
   map.addSource('accuracy', { type: 'geojson', data: EMPTY });
+  map.addSource('home', { type: 'geojson', data: EMPTY });
+  map.addLayer({ id: 'home-fill', type: 'fill', source: 'home', paint: { 'fill-color': '#ff7aa3', 'fill-opacity': 0.1 } });
+  map.addLayer({
+    id: 'home-line',
+    type: 'line',
+    source: 'home',
+    paint: { 'line-color': '#ff5d8f', 'line-opacity': 0.5, 'line-width': 2, 'line-dasharray': [1, 2] },
+  });
   map.addLayer({ id: 'zones-fill', type: 'fill', source: 'zones', paint: { 'fill-color': '#9f7aea', 'fill-opacity': 0.12 } });
   map.addLayer({
     id: 'zones-line',
@@ -189,6 +220,26 @@ function addGameLayers(map: maplibregl.Map) {
 function lastSeen(a: Animal): [number, number] {
   const e = a.encounters[a.encounters.length - 1];
   return [e.lng, e.lat];
+}
+
+/** Segnaposto unico per gli animali della zona privata (la loro posizione precisa non esiste). */
+function homeMarkerEl(count: number): HTMLElement {
+  const el = document.createElement('button');
+  el.className = 'home-marker';
+  el.setAttribute('aria-label', 'Zona privata di casa');
+  el.innerHTML =
+    '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/><path d="M10 21v-6h4v6"/></svg>';
+  if (count) {
+    const b = document.createElement('span');
+    b.className = 'count';
+    b.textContent = String(count);
+    el.appendChild(b);
+  }
+  el.addEventListener('click', (e) => {
+    e.stopPropagation();
+    go('collezione');
+  });
+  return el;
 }
 
 function animalMarkerEl(a: Animal): HTMLElement {
@@ -223,6 +274,8 @@ export function MapView() {
   const animals = useGame((s) => s.animals);
   const zones = useGame((s) => s.player.zones);
   const avatar = useGame((s) => s.player.avatar);
+  const home = useGame((s) => s.player.home);
+  const homeMarker = useRef<maplibregl.Marker | null>(null);
 
   // Creazione della mappa (una volta sola).
   useEffect(() => {
@@ -254,7 +307,7 @@ export function MapView() {
       if (!map.isStyleLoaded() && /style|Failed to fetch|NetworkError/i.test(String(e.error?.message ?? ''))) useFallback();
     });
     map.on('style.load', () => {
-      applyGameStyle(map);
+      applyGameStyle(map, useTheme.getState().dark);
       addGameLayers(map);
       setStyleReady((n) => n + 1);
     });
@@ -269,6 +322,7 @@ export function MapView() {
       // I segnaposto appartenevano alla mappa appena distrutta.
       playerRef.current = null;
       markers.current.clear();
+      homeMarker.current = null;
     };
   }, []);
 
@@ -298,18 +352,36 @@ export function MapView() {
     if (dot) dot.innerHTML = avatarSvg(avatar);
   }, [avatar, fix !== null]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Giorno e notte.
+  const dark = useTheme((s) => s.dark);
+  useEffect(() => {
+    const map = mapRef.current;
+    if (map?.isStyleLoaded()) applyGameStyle(map, dark);
+  }, [dark, styleReady]);
+
   // Zone esplorate.
   useEffect(() => {
     (mapRef.current?.getSource('zones') as GeoJSONSource | undefined)?.setData(zonesGeoJSON(zones));
   }, [zones, styleReady]);
 
-  // Animali catturati sulla mappa, nel punto dell'ultimo incontro.
+  // Zona privata di casa: cerchio e un segnaposto con il numero di animali "di casa".
+  const homeCount = animals.filter((a) => a.encounters[a.encounters.length - 1].priv).length;
+  useEffect(() => {
+    const map = mapRef.current;
+    (map?.getSource('home') as GeoJSONSource | undefined)?.setData(home ? circle(home.lng, home.lat, home.r) : EMPTY);
+    homeMarker.current?.remove();
+    homeMarker.current = null;
+    if (map && home) homeMarker.current = new maplibregl.Marker({ element: homeMarkerEl(homeCount) }).setLngLat([home.lng, home.lat]).addTo(map);
+  }, [home, homeCount, styleReady]);
+
+  // Animali catturati sulla mappa, nel punto dell'ultimo incontro (quelli di casa no).
   useEffect(() => {
     const map = mapRef.current;
     if (!map) return;
     const current = markers.current;
     const seen = new Set<string>();
     for (const a of animals) {
+      if (a.encounters[a.encounters.length - 1].priv) continue;
       seen.add(a.id);
       const key = `${a.coverPhotoId}|${a.rarity}|${a.encounters.length}`;
       const existing = current.get(a.id);

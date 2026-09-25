@@ -7,11 +7,13 @@ import { useRoute } from './router';
 import { AlbumScreen } from './screens/AlbumScreen';
 import { AnimalScreen } from './screens/AnimalScreen';
 import { CollectionScreen } from './screens/CollectionScreen';
+import { DiaryScreen } from './screens/DiaryScreen';
 import { Onboarding } from './screens/Onboarding';
 import { ProfileScreen } from './screens/ProfileScreen';
 import { BottomNav } from './ui/BottomNav';
 import { Logo } from './ui/common';
 import { Celebrations, Toasts } from './ui/Overlays';
+import { useAppearance } from './ui/theme';
 
 // La cattura (con la AI) si carica a parte: l'avvio dell'app resta leggero.
 const CaptureScreen = lazy(() => import('./capture/CaptureScreen').then((m) => ({ default: m.CaptureScreen })));
@@ -22,6 +24,7 @@ export function App() {
   const ready = useGame((s) => s.ready);
   const onboarded = useGame((s) => s.player.onboarded);
   const [page = '', param] = useRoute();
+  useAppearance();
 
   useEffect(() => {
     void useGame.getState().init();
@@ -49,9 +52,9 @@ export function App() {
   }
   if (!onboarded) return <Onboarding />;
 
-  const known = TABS.includes(page) || ['animale', 'cattura'].includes(page);
+  const known = TABS.includes(page) || ['animale', 'cattura', 'diario'].includes(page);
   const route = known ? page : '';
-  const tab = route === 'animale' ? 'collezione' : route;
+  const tab = route === 'animale' ? 'collezione' : route === 'diario' ? 'profilo' : route;
 
   return (
     <>
@@ -60,13 +63,14 @@ export function App() {
       {route === 'collezione' && <CollectionScreen />}
       {route === 'album' && <AlbumScreen entryId={param} key={param ? 'entry' : 'list'} />}
       {route === 'profilo' && <ProfileScreen />}
+      {route === 'diario' && <DiaryScreen />}
       {route === 'animale' && param && <AnimalScreen id={param} />}
       {route === 'cattura' && (
         <Suspense fallback={<div className="capture" />}>
           <CaptureScreen />
         </Suspense>
       )}
-      {TABS.includes(route) && <BottomNav active={tab} />}
+      {(TABS.includes(route) || route === 'diario') && <BottomNav active={tab} />}
       <Toasts />
       {route !== 'cattura' && <Celebrations />}
     </>

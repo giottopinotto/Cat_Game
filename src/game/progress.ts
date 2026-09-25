@@ -1,5 +1,5 @@
 import { baseStats, getEntry } from '../data/entries';
-import { RARITY_INFO, type Animal, type BreedEntry, type Stats } from '../data/types';
+import { RARITY_INFO, type Animal, type BreedEntry, type Rarity, type Stats } from '../data/types';
 
 // ---- Livelli del giocatore ------------------------------------------------
 
@@ -102,9 +102,12 @@ export function makeStats(entry: BreedEntry, seed: string): Stats {
 
 /** Punti Zampa: la "forza" della carta. Cresce con l'amicizia. */
 export function pawPoints(animal: Animal): number {
-  const base = RARITY_INFO[animal.rarity].pz;
-  const avg = (animal.stats[0] + animal.stats[1] + animal.stats[2]) / 3;
-  const friend = friendshipLevel(animal);
+  return pawPointsFor(animal.rarity, animal.stats, friendshipLevel(animal));
+}
+
+export function pawPointsFor(rarity: Rarity, stats: Stats, friend: number): number {
+  const base = RARITY_INFO[rarity].pz;
+  const avg = (stats[0] + stats[1] + stats[2]) / 3;
   return Math.round(base * (0.8 + avg / 250) * (1 + 0.15 * (friend - 1)));
 }
 

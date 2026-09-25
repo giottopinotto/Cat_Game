@@ -1,6 +1,7 @@
 import { useEffect, type CSSProperties, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { RARITY_INFO, type Rarity } from '../data/types';
+import { vibrationOn } from './sound';
 
 export function rarityStyle(r: Rarity): CSSProperties {
   return { '--rarity': RARITY_INFO[r].color } as CSSProperties;
@@ -55,6 +56,7 @@ export function formatNumber(n: number): string {
 }
 
 export function vibrate(pattern: number | number[]): void {
+  if (!vibrationOn()) return;
   try {
     navigator.vibrate?.(pattern);
   } catch {

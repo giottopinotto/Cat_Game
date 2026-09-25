@@ -1,8 +1,11 @@
 import 'fake-indexeddb/auto';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { RARITY_INFO } from '../data/types';
 import { kvGet, loadAnimals, wipeAll } from './db';
 import { bumpRarity, rarityFor, useGame, XP_FIRST_TODAY, XP_NEW_ENTRY, XP_ZONE, type CaptureDraft, type PlayerData } from './store';
+
+// Gli eventi a tempo dipendono dal giorno: nei test delle ricompense si tengono spenti.
+vi.mock('./events', async (orig) => ({ ...(await orig<typeof import('./events')>()), eventBonus: () => null }));
 
 const draft = (over: Partial<CaptureDraft> = {}): CaptureDraft => ({
   species: 'cat',

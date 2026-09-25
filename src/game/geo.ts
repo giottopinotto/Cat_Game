@@ -64,6 +64,12 @@ export function hexId(p: LatLng): string {
   return `${q},${r}`;
 }
 
+/** Centro di un esagono. */
+export function hexCenter(q: number, r: number): LatLng {
+  const [lng, lat] = fromMerc(HEX_SIZE * (SQRT3 * q + (SQRT3 / 2) * r), HEX_SIZE * 1.5 * r);
+  return { lat, lng };
+}
+
 /** Anello chiuso [lng, lat] dei vertici di un esagono. */
 export function hexPolygon(q: number, r: number): [number, number][] {
   const cx = HEX_SIZE * (SQRT3 * q + (SQRT3 / 2) * r);

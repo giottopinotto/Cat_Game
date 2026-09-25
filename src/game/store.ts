@@ -4,7 +4,10 @@ import { getEntry } from '../data/entries';
 import { RARITIES, RARITY_INFO, rarityIndex, type Animal, type Encounter, type Rarity, type Species } from '../data/types';
 import { BADGES, badgeTier, TIER_NAMES, TIER_XP, type BadgeDef } from './badges';
 import { deleteAnimal, kvGet, kvSet, loadAnimals, requestPersistence, saveAnimal, savePhoto } from './db';
-import { distanceM, hexId } from './geo';
+import { eventBonus } from './events';
+import { cleanFriendCard, MAX_FRIEND_CARDS, type FriendCard } from './friends';
+import { distanceM, hexCenter, hexId, type LatLng } from './geo';
+import { inHome, makeHomeZone, privatize, type HomeZone } from './privacy';
 import { onFix, type Fix } from './location';
 import {
   ALL_DONE_BONUS,
@@ -27,6 +30,17 @@ export interface DailyMissions {
   bonusClaimed: boolean;
 }
 
+export type ThemeChoice = 'auto' | 'light' | 'dark';
+
+export interface Settings {
+  sound: boolean;
+  vibration: boolean;
+  /** Tema: automatico (scuro la sera), sempre chiaro o sempre scuro. */
+  theme: ThemeChoice;
+}
+
+export const DEFAULT_SETTINGS: Settings = { sound: true, vibration: true, theme: 'auto' };
+
 export interface PlayerData {
   name: string;
   avatar: string;
@@ -39,6 +53,17 @@ export interface PlayerData {
   missions: DailyMissions;
   missionsDone: number;
   badgeTiers: Record<string, number>;
+  /** Zona privata di casa (null se non impostata). */
+  home: HomeZone | null;
+  settings: Settings;
+  /** Ultimo backup salvato (0 = mai). */
+  lastBackupAt: number;
+  /** Ultima volta che è stato mostrato il promemoria del backup. */
+  backupNagAt: number;
+  /** Metri camminati per giorno (AAAA-MM-GG), per il diario. */
+  dailyWalk: Record<string, number>;
+  /** Carte ricevute dagli amici. */
+  friends: FriendCard[];
 }
 
 export interface Reward {
@@ -103,6 +128,25 @@ interface GameState {
   dismissCelebration(): void;
   /** Nuova posizione GPS: camminata, zone esplorate e relative sfide. */
   handleFix(fix: Fix): void;
+  /** Imposta la zona privata attorno alla posizione reale e nasconde le catture già fatte lì. */
+  setHome(real: LatLng, radius: number): Promise<number>;
+  clearHome(): void;
+  updateSettings(s: Partial<Settings>): void;
+  markBackupDone(): void;
+  snoozeBackup(): void;
+  /** Aggiunge una carta amica. 'own' se è una propria carta. */
+  addFriendCard(card: FriendCard): 'new' | 'updated' | 'own';
+  removeFriendCard(id: string): void;
+}
+
+/** Quanti giorni di metri camminati tenere nel diario. */
+const WALK_DAYS = 400;
+
+function addDailyWalk(walk: Record<string, number>, day: string, m: number): Record<string, number> {
+  const next = { ...walk, [day]: (walk[day] ?? 0) + m };
+  const keys = Object.keys(next);
+  if (keys.length > WALK_DAYS) for (const k of keys.sort().slice(0, keys.length - WALK_DAYS)) delete next[k];
+  return next;
 }
 
 export const XP_NEW_ENTRY = 100;
@@ -133,6 +177,12 @@ export function defaultPlayer(): PlayerData {
     missions: { day, list: generateDailyMissions(day, 0), bonusClaimed: false },
     missionsDone: 0,
     badgeTiers: {},
+    home: null,
+    settings: { ...DEFAULT_SETTINGS },
+    lastBackupAt: 0,
+    backupNagAt: 0,
+    dailyWalk: {},
+    friends: [],
   };
 }
 
@@ -140,7 +190,16 @@ export function defaultPlayer(): PlayerData {
 export function normalizePlayer(stored: Partial<PlayerData> | undefined): PlayerData {
   const base = defaultPlayer();
   if (!stored) return base;
-  return { ...base, ...stored, missions: stored.missions ?? base.missions, badgeTiers: { ...stored.badgeTiers } };
+  return {
+    ...base,
+    ...stored,
+    missions: stored.missions ?? base.missions,
+    badgeTiers: { ...stored.badgeTiers },
+    home: stored.home ?? null,
+    settings: { ...DEFAULT_SETTINGS, ...stored.settings },
+    dailyWalk: { ...stored.dailyWalk },
+    friends: stored.friends ?? [],
+  };
 }
 
 /** Rarità aumentata di `steps` livelli (es. occhi di due colori). */
@@ -253,7 +312,8 @@ export const useGame = create<GameState>((set, get) => {
         }
       }
     }
-    const zone = fix.accuracy <= 60 ? hexId(fix) : null;
+    // Nella zona privata di casa non si segnano zone esplorate (rivelerebbero dove abiti).
+    const zone = fix.accuracy <= 60 && !inHome(player.home, fix) ? hexId(fix) : null;
     const newZone = zone !== null && !player.zones.includes(zone);
     if (!walked && !newZone) return;
 
@@ -261,6 +321,7 @@ export const useGame = create<GameState>((set, get) => {
     const updated: PlayerData = {
       ...p,
       walkedM: p.walkedM + walked,
+      dailyWalk: walked ? addDailyWalk(p.dailyWalk, today(), walked) : p.dailyWalk,
       zones: newZone ? [...p.zones, zone!] : p.zones,
     };
     const base: Reward[] = newZone ? [{ icon: 'compass', label: 'Nuova zona esplorata', xp: XP_ZONE }] : [];
@@ -323,7 +384,7 @@ export const useGame = create<GameState>((set, get) => {
       const now = Date.now();
       await savePhoto({ id: photoId, card: d.card, thumb: d.thumb });
       const rarity = rarityFor(d.entryId, d.heterochromia);
-      const enc: Encounter = { at: now, lat: d.lat, lng: d.lng, park: d.park, photoId };
+      const enc: Encounter = privatize(get().player.home, { at: now, lat: d.lat, lng: d.lng, park: d.park, photoId });
       const animal: Animal = {
         id,
         species: d.species,
@@ -348,6 +409,8 @@ export const useGame = create<GameState>((set, get) => {
 
       const updatedPlayer = firstToday ? { ...player, activeDays: [...player.activeDays, day] } : player;
       const ev = captureEvent(d.species, entry.id, rarity, false, newEntry, d.park);
+      const bonus = eventBonus(ev, RARITY_INFO[rarity].xp);
+      if (bonus) base.push({ icon: bonus.event.icon, label: `Evento: ${bonus.event.name}`, xp: bonus.xp });
       const r = settle(updatedPlayer, [animal, ...animals], base, (m) => applyCaptureToMission(m, ev));
       return {
         animal,
@@ -373,7 +436,7 @@ export const useGame = create<GameState>((set, get) => {
       await savePhoto({ id: photoId, card: d.card, thumb: d.thumb });
       const day = today();
       const sameDay = a.encounters.some((e) => dayKey(e.at) === day);
-      const enc: Encounter = { at: now, lat: d.lat, lng: d.lng, park: d.park, photoId };
+      const enc: Encounter = privatize(get().player.home, { at: now, lat: d.lat, lng: d.lng, park: d.park, photoId });
       const updated: Animal = { ...a, encounters: [...a.encounters, enc] };
       await saveAnimal(updated);
 
@@ -388,6 +451,10 @@ export const useGame = create<GameState>((set, get) => {
       if (firstToday) base.push({ icon: 'sun', label: 'Primo incontro di oggi', xp: XP_FIRST_TODAY });
       const updatedPlayer = firstToday ? { ...player, activeDays: [...player.activeDays, day] } : player;
       const ev = captureEvent(a.species, a.entryId, a.rarity, true, false, d.park);
+      if (!sameDay) {
+        const bonus = eventBonus(ev, XP_REENCOUNTER);
+        if (bonus) base.push({ icon: bonus.event.icon, label: `Evento: ${bonus.event.name}`, xp: bonus.xp });
+      }
       const r = settle(
         updatedPlayer,
         animals.map((x) => (x.id === a.id ? updated : x)),
@@ -448,6 +515,71 @@ export const useGame = create<GameState>((set, get) => {
     },
 
     handleFix,
+
+    async setHome(real, radius) {
+      const home = makeHomeZone(real, radius);
+      // Le catture già fatte vicino a casa perdono la posizione precisa.
+      const changed: Animal[] = [];
+      const animals = get().animals.map((a) => {
+        let touched = false;
+        const encounters = a.encounters.map((e) => {
+          if (e.priv || (distanceM(real, e) > radius && !inHome(home, e))) return e;
+          touched = true;
+          return { ...e, lat: home.lat, lng: home.lng, priv: true };
+        });
+        if (!touched) return a;
+        const updated = { ...a, encounters };
+        changed.push(updated);
+        return updated;
+      });
+      for (const a of changed) await saveAnimal(a);
+      // Anche le zone esplorate dentro il cerchio vengono tolte.
+      const p = get().player;
+      const zones = p.zones.filter((z) => {
+        const [q, r] = z.split(',').map(Number);
+        const c = hexCenter(q, r);
+        return distanceM(real, c) > radius && !inHome(home, c);
+      });
+      set({ animals, player: { ...p, home, zones } });
+      persistPlayer();
+      return changed.length;
+    },
+
+    clearHome() {
+      set((s) => ({ player: { ...s.player, home: null } }));
+      persistPlayer();
+    },
+
+    updateSettings(partial) {
+      set((s) => ({ player: { ...s.player, settings: { ...s.player.settings, ...partial } } }));
+      persistPlayer();
+    },
+
+    markBackupDone() {
+      set((s) => ({ player: { ...s.player, lastBackupAt: Date.now() } }));
+      persistPlayer();
+    },
+
+    snoozeBackup() {
+      set((s) => ({ player: { ...s.player, backupNagAt: Date.now() } }));
+      persistPlayer();
+    },
+
+    addFriendCard(card) {
+      const clean = cleanFriendCard(card);
+      if (!clean || get().animals.some((a) => a.id === clean.id)) return 'own';
+      const p = get().player;
+      const exists = p.friends.some((f) => f.id === clean.id);
+      const friends = [clean, ...p.friends.filter((f) => f.id !== clean.id)].slice(0, MAX_FRIEND_CARDS);
+      set({ player: { ...p, friends } });
+      persistPlayer();
+      return exists ? 'updated' : 'new';
+    },
+
+    removeFriendCard(id) {
+      set((s) => ({ player: { ...s.player, friends: s.player.friends.filter((f) => f.id !== id) } }));
+      persistPlayer();
+    },
   };
 });
 

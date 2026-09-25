@@ -152,6 +152,6 @@ export const DEFAULT_AVATAR = 'gatto-rosso';
 
 /** SVG dell'avatar (se l'id non esiste, ad esempio un vecchio avatar emoji, quello predefinito). */
 export function avatarSvg(id: string): string {
-  const body = SVGS[id] ?? SVGS[DEFAULT_AVATAR];
+  const body = Object.hasOwn(SVGS, id) ? SVGS[id] : SVGS[DEFAULT_AVATAR];
   return `<svg viewBox="0 0 64 64" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">${body}</svg>`;
 }

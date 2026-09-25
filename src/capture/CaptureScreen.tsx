@@ -8,6 +8,7 @@ import { mapApi } from '../map/MapView';
 import { back } from '../router';
 import { vibrate } from '../ui/common';
 import { GameIcon, IconBubble } from '../ui/icons';
+import { play } from '../ui/sound';
 import { analyzePhoto, type Analysis } from '../vision/analyze';
 import { detectAnimals, downscale, loadDetector, loadVision, pickMain, scaleDetections, type Box } from '../vision/engine';
 import { BLURRY, grabFrame, makePhotos, sharpness } from '../vision/photo';
@@ -184,6 +185,7 @@ export function CaptureScreen() {
     // Tre fotogrammi in rapida successione: si tiene il più nitido (mani che tremano, animale che si muove).
     // Lo schermo si "ferma" subito sul primo fotogramma; gli altri due si prendono dietro le quinte.
     vibrate(30);
+    play('shutter');
     const frames = [grabFrame(v)];
     const frozen = frozenRef.current;
     if (frozen) {
@@ -206,6 +208,7 @@ export function CaptureScreen() {
       const analysis = await analyzePhoto(frame);
       if (!analysis) {
         vibrate([40, 60, 40]);
+        play('error');
         setPhase({ k: 'notfound' });
         return;
       }

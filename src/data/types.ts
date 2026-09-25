@@ -55,6 +55,8 @@ export interface Encounter {
   lng: number;
   /** Catturato dentro un parco o un giardino. */
   park?: boolean;
+  /** Catturato nella zona privata di casa: la posizione è solo quella (approssimata) della zona. */
+  priv?: boolean;
   photoId: string;
 }
 
