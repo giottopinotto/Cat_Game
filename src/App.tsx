@@ -13,7 +13,7 @@ import { FriendLink, FriendsScreen } from './screens/FriendsScreen';
 import { Onboarding } from './screens/Onboarding';
 import { ProfileScreen } from './screens/ProfileScreen';
 import { BottomNav } from './ui/BottomNav';
-import { Logo } from './ui/common';
+import { Splash } from './ui/Splash';
 import { Celebrations, Toasts } from './ui/Overlays';
 import { useAppearance } from './ui/theme';
 
@@ -58,13 +58,7 @@ export function App() {
     return () => clearTimeout(t);
   }, [ready, onboarded]);
 
-  if (!ready) {
-    return (
-      <div className="onboarding" style={{ justifyContent: 'center' }}>
-        <Logo />
-      </div>
-    );
-  }
+  if (!ready) return <Splash />;
   if (!onboarded) return <Onboarding />;
 
   const known = TABS.includes(page) || ['animale', 'cattura', 'diario', 'amici', 'amico', 'premi'].includes(page);

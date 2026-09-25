@@ -47,6 +47,7 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.svg', 'icons/apple-touch-icon.png'],
       manifest: {
+        id: './',
         name: 'Zampe in Giro',
         short_name: 'Zampe',
         description: 'Cattura con la fotocamera i cani e i gatti veri che incontri per strada!',
@@ -66,7 +67,8 @@ export default defineConfig({
       workbox: {
         globPatterns: ['**/*.{js,css,html,svg,png,woff2}'],
         // Solo i caratteri latini servono all'italiano; il resto si scarica se serve.
-        globIgnores: ['**/mediapipe/**', '**/models/**', '**/fredoka-hebrew*', '**/fredoka-latin-ext*'],
+        // Le icone degli altri colori le scarica il telefono solo se servono.
+        globIgnores: ['**/mediapipe/**', '**/models/**', '**/fredoka-hebrew*', '**/fredoka-latin-ext*', 'icons/*/**'],
         maximumFileSizeToCacheInBytes: 4 * 1024 * 1024,
         runtimeCaching: [
           {

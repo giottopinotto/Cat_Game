@@ -36,6 +36,25 @@ function apply(choice: ThemeChoice, accentId: string) {
   document.querySelector('meta[name="theme-color"]')?.setAttribute('content', bar);
   const st = useTheme.getState();
   if (st.dark !== dark || st.accent !== a.id) useTheme.setState({ dark, accent: a.id });
+  applyIcons(a.id);
+  // Per la prossima apertura (vedi public/boot.js): solo il colore e il tema, niente di personale.
+  try {
+    localStorage.setItem('zig-look', JSON.stringify({ accent: a.id, h: a.h, s: a.s, l: a.l, theme: choice }));
+  } catch {
+    /* memoria del browser non disponibile: pazienza */
+  }
+}
+
+/** Icona della scheda, icona per la schermata Home e "manifest" nel colore scelto. */
+function applyIcons(accentId: string) {
+  const lilac = accentId === DEFAULT_ACCENT;
+  const set = (selector: string, href: string) => {
+    const el = document.querySelector<HTMLLinkElement>(selector);
+    if (el && el.getAttribute('href') !== href) el.setAttribute('href', href);
+  };
+  set('link[rel="icon"]', lilac ? 'favicon.svg' : `icons/${accentId}/favicon.svg`);
+  set('link[rel="apple-touch-icon"]', lilac ? 'icons/apple-touch-icon.png' : `icons/${accentId}/apple-touch-icon.png`);
+  set('link[rel="manifest"]', lilac ? 'manifest.webmanifest' : `manifest-${accentId}.webmanifest`);
 }
 
 /** Applica tema, suoni e vibrazione scelti nelle impostazioni. */
