@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { useLocation } from '../game/location';
+import { useEffect, useState } from 'react';
+import { releaseLocation, startLocation, useLocation } from '../game/location';
 import { HOME_RADII } from '../game/privacy';
 import { useGame } from '../game/store';
 import { Sheet } from '../ui/common';
@@ -14,6 +14,15 @@ export function HomeZoneSheet({ onClose }: { onClose: () => void }) {
   const [radius, setRadius] = useState<number>(HOME_RADII[1]);
   const [busy, setBusy] = useState(false);
   const fixOk = !!fix && fix.accuracy <= 100;
+
+  // Serve la posizione per creare la zona: se il GPS è acceso solo per le foto, lo si accende qui.
+  useEffect(() => {
+    if (home) return;
+    startLocation();
+    return () => {
+      if (useGame.getState().player.settings.gpsOnlyPhoto) releaseLocation();
+    };
+  }, [home]);
 
   async function save() {
     if (!fix || !fixOk) return;

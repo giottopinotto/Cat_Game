@@ -19,6 +19,7 @@ import {
   missionDone,
   missionIcon,
   missionText,
+  withoutMoveMissions,
   type CaptureEvent,
   type Mission,
 } from './missions';
@@ -42,9 +43,11 @@ export interface Settings {
   shareKm: boolean;
   /** Mostrare agli amici i nomi dati ai propri animali. */
   shareNames: boolean;
+  /** Posizione accesa solo mentre si fotografa (niente GPS mentre si cammina). */
+  gpsOnlyPhoto: boolean;
 }
 
-export const DEFAULT_SETTINGS: Settings = { sound: true, vibration: true, theme: 'auto', shareKm: true, shareNames: true };
+export const DEFAULT_SETTINGS: Settings = { sound: true, vibration: true, theme: 'auto', shareKm: true, shareNames: true, gpsOnlyPhoto: true };
 
 export interface PlayerData {
   name: string;
@@ -305,6 +308,11 @@ export const useGame = create<GameState>((set, get) => {
   function handleFix(fix: Fix) {
     const { ready, player } = get();
     if (!ready || !player.onboarded) return;
+    // Posizione solo per le foto: niente km né zone, e nessuna traccia degli spostamenti.
+    if (player.settings.gpsOnlyPhoto) {
+      lastWalk = null;
+      return;
+    }
     get().ensureToday();
 
     let walked = 0;
@@ -363,7 +371,9 @@ export const useGame = create<GameState>((set, get) => {
       persistTimer = null;
       const [animals, stored] = await Promise.all([loadAnimals(), kvGet<PlayerData>('player')]);
       animals.sort((a, b) => b.createdAt - a.createdAt);
-      set({ animals, player: normalizePlayer(stored), ready: true });
+      const player = normalizePlayer(stored);
+      if (player.settings.gpsOnlyPhoto) player.missions = { ...player.missions, list: withoutMoveMissions(player.missions.list) };
+      set({ animals, player, ready: true });
       get().ensureToday();
       void requestPersistence();
     },
@@ -382,7 +392,9 @@ export const useGame = create<GameState>((set, get) => {
       const day = today();
       const p = get().player;
       if (p.missions.day === day) return;
-      set({ player: { ...p, missions: { day, list: generateDailyMissions(day, get().animals.length), bonusClaimed: false } } });
+      set({
+        player: { ...p, missions: { day, list: generateDailyMissions(day, get().animals.length, p.settings.gpsOnlyPhoto), bonusClaimed: false } },
+      });
       persistPlayer();
     },
 
@@ -562,7 +574,11 @@ export const useGame = create<GameState>((set, get) => {
     },
 
     updateSettings(partial) {
-      set((s) => ({ player: { ...s.player, settings: { ...s.player.settings, ...partial } } }));
+      set((s) => {
+        const settings = { ...s.player.settings, ...partial };
+        const missions = settings.gpsOnlyPhoto ? { ...s.player.missions, list: withoutMoveMissions(s.player.missions.list) } : s.player.missions;
+        return { player: { ...s.player, settings, missions } };
+      });
       persistPlayer();
     },
 

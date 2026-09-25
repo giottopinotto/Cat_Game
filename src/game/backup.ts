@@ -125,6 +125,7 @@ function cleanPlayer(p: unknown): PlayerData {
       theme: (['auto', 'light', 'dark'] as ThemeChoice[]).includes(x.settings?.theme as ThemeChoice) ? x.settings!.theme : DEFAULT_SETTINGS.theme,
       shareKm: typeof x.settings?.shareKm === 'boolean' ? x.settings.shareKm : DEFAULT_SETTINGS.shareKm,
       shareNames: typeof x.settings?.shareNames === 'boolean' ? x.settings.shareNames : DEFAULT_SETTINGS.shareNames,
+      gpsOnlyPhoto: typeof x.settings?.gpsOnlyPhoto === 'boolean' ? x.settings.gpsOnlyPhoto : DEFAULT_SETTINGS.gpsOnlyPhoto,
     },
     lastBackupAt: clamp(x.lastBackupAt, 0, Date.now() + 86400000, 0),
     backupNagAt: clamp(x.backupNagAt, 0, Date.now() + 86400000, 0),

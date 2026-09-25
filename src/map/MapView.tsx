@@ -337,10 +337,28 @@ export function MapView() {
     };
   }, []);
 
+  // Senza posizione (GPS acceso solo per le foto) niente segnaposto del giocatore:
+  // la mappa parte dall'ultimo animale trovato.
+  const centered = useRef(false);
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || fix) return;
+    playerRef.current?.marker.remove();
+    playerRef.current = null;
+    (map.getSource('accuracy') as GeoJSONSource | undefined)?.setData(EMPTY);
+    if (centered.current) return;
+    const last = [...animals].sort((a, b) => b.encounters[b.encounters.length - 1].at - a.encounters[a.encounters.length - 1].at)[0];
+    if (!last) return;
+    centered.current = true;
+    const [lng, lat] = lastSeen(last);
+    map.jumpTo({ center: [lng, lat], zoom: 15.5, pitch: 40 });
+  }, [fix, animals, styleReady]);
+
   // Segnaposto del giocatore e cerchio di precisione.
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !fix) return;
+    centered.current = true;
     if (!playerRef.current) {
       const el = document.createElement('div');
       el.className = 'player-marker';

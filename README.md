@@ -27,6 +27,8 @@ e i dati restano sul telefono.
 - 👟 **Km a piedi e zone esplorate**: gli spostamenti in auto o in bus non valgono.
 - 💾 **Backup** su file e ripristino (utile se cambi telefono), **condivisione** della carta come
   immagine.
+- 📍 **Posizione solo per le foto** (attiva di base): il GPS si accende solo nella fotocamera e si spegne
+  uscendo, quindi i tuoi spostamenti non vengono seguiti. Si può disattivare dal profilo per contare km e zone.
 - 🏠 **Zona privata di casa**: vicino a casa le catture non salvano la posizione precisa, solo una zona
   con il centro spostato a caso. Anche le zone esplorate lì non vengono segnate.
 - 🤝 **Amici senza server**: ci si aggiunge di persona con un QR code; poi gli aggiornamenti (livello,

@@ -20,6 +20,7 @@ export function MapHud() {
   const player = useGame((s) => s.player);
   const animals = useGame((s) => s.animals);
   const { status, fix, error } = useLocation();
+  const gpsOnlyPhoto = useGame((s) => s.player.settings.gpsOnlyPhoto);
   const follow = useFollow((s) => s.on);
   const [showMissions, setShowMissions] = useState(false);
   const [dismissed, setDismissed] = useState<string[]>([]);
@@ -64,7 +65,7 @@ export function MapHud() {
         </button>
       </div>
 
-      {status !== 'ok' && (
+      {status !== 'ok' && !gpsOnlyPhoto && (
         <div className="gps-banner">
           <IconBubble name={status === 'denied' ? 'pin' : 'satellite'} size={42} />
           <div className="grow">
@@ -92,7 +93,7 @@ export function MapHud() {
         </div>
       )}
 
-      {events.length > 0 && status === 'ok' && (
+      {events.length > 0 && (status === 'ok' || gpsOnlyPhoto) && (
         <button className="event-chip" onClick={() => setShowMissions(true)}>
           <GameIcon name={events[0].icon} size={18} />
           <span>
@@ -118,7 +119,13 @@ export function MapHud() {
 
       {nearby && <NearbyHint {...nearby} onClose={() => setDismissed((d) => [...d, nearby.id])} />}
 
-      <div className="hud-side">
+      {gpsOnlyPhoto && !showBackup && (
+        <div className="gps-off-chip" role="status">
+          <GameIcon name="lock" size={15} /> Posizione solo per le foto
+        </div>
+      )}
+
+      {!gpsOnlyPhoto && <div className="hud-side">
         <button
           className={`icon-btn ${follow ? 'follow-on' : ''}`}
           aria-label="Centra sulla mia posizione"
@@ -126,7 +133,7 @@ export function MapHud() {
         >
           <LocateFixed size={24} />
         </button>
-      </div>
+      </div>}
 
       {showMissions && <MissionsSheet onClose={() => setShowMissions(false)} />}
     </>

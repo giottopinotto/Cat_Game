@@ -22,7 +22,8 @@ export function Onboarding() {
 
   function start() {
     finish(name.trim() || 'Esploratore', avatar);
-    startLocation();
+    // Con la posizione solo per le foto il permesso si chiede alla prima cattura.
+    if (!useGame.getState().player.settings.gpsOnlyPhoto) startLocation();
   }
 
   return (
@@ -83,8 +84,8 @@ export function Onboarding() {
             </div>
           </div>
           <p className="muted" style={{ fontSize: 14, marginTop: 16 }}>
-            Al prossimo passo il telefono ti chiederà il permesso di usare la posizione: serve per la mappa e per registrare dove trovi gli
-            animali (resta solo sul tuo telefono).
+            Quando fai la prima foto il telefono ti chiederà il permesso di usare la posizione: serve solo per segnare dove trovi gli
+            animali (resta sul tuo telefono). Mentre cammini il GPS resta spento.
           </p>
         </div>
       )}

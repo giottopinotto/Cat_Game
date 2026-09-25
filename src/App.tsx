@@ -1,5 +1,5 @@
 import { lazy, Suspense, useEffect } from 'react';
-import { startLocation } from './game/location';
+import { releaseLocation, startLocation } from './game/location';
 import { useGame } from './game/store';
 import { MapHud } from './map/MapHud';
 import { MapView } from './map/MapView';
@@ -24,6 +24,7 @@ const TABS = ['', 'collezione', 'album', 'profilo'];
 export function App() {
   const ready = useGame((s) => s.ready);
   const onboarded = useGame((s) => s.player.onboarded);
+  const gpsOnlyPhoto = useGame((s) => s.player.settings.gpsOnlyPhoto);
   const [page = '', param] = useRoute();
   useAppearance();
 
@@ -34,9 +35,16 @@ export function App() {
     return () => document.removeEventListener('visibilitychange', onVisible);
   }, []);
 
+  // GPS sempre acceso, oppure solo mentre si fotografa (lo accende la schermata di cattura).
   useEffect(() => {
     if (!ready || !onboarded) return;
-    startLocation();
+    if (gpsOnlyPhoto) {
+      if (page !== 'cattura') releaseLocation();
+    } else startLocation();
+  }, [ready, onboarded, gpsOnlyPhoto, page]);
+
+  useEffect(() => {
+    if (!ready || !onboarded) return;
     // Prepara la AI in anticipo, così la prima cattura è immediata (salvo risparmio dati).
     const saveData = (navigator as { connection?: { saveData?: boolean } }).connection?.saveData;
     if (saveData) return;

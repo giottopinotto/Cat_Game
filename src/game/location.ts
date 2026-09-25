@@ -73,6 +73,12 @@ export function stopLocation(): void {
   watchId = null;
 }
 
+/** Spegne il GPS e dimentica l'ultima posizione (modalità "posizione solo per le foto"). */
+export function releaseLocation(): void {
+  stopLocation();
+  if (useLocation.getState().status !== 'denied') useLocation.setState({ status: 'idle', fix: null, error: null });
+}
+
 /** Riprova dopo un rifiuto (serve un gesto dell'utente su alcuni browser). */
 export function retryLocation(): void {
   stopLocation();

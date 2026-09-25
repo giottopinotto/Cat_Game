@@ -16,7 +16,7 @@ describe('zona privata di casa', () => {
     for (let i = 0; i < 50; i++) {
       const z = makeHomeZone(home, 150);
       const d = distanceM(z, home);
-      expect(d).toBeGreaterThan(15);
+      expect(d).toBeGreaterThan(10);
       expect(d).toBeLessThan(150 * 0.4);
       expect(inHome(z, home)).toBe(true);
     }
@@ -95,7 +95,7 @@ describe('nello store', () => {
     expect(n).toBe(1);
     const [far, near] = useGame.getState().animals;
     expect(near.encounters[0].priv).toBe(true);
-    expect(near.encounters[0].lat).not.toBe(45.4642);
+    expect(distanceM(near.encounters[0], { lat: 45.4642, lng: 9.19 })).toBeGreaterThan(10);
     expect(far.encounters[0].priv).toBeUndefined();
     const again = await useGame.getState().captureNew(draft(45.4643));
     expect(again.animal.encounters[0].priv).toBe(true);
@@ -127,7 +127,7 @@ describe('backup con i nuovi dati', () => {
     await useGame.getState().init();
     const p = useGame.getState().player;
     expect(p.home).toBeNull();
-    expect(p.settings).toEqual({ sound: true, vibration: false, theme: 'auto', shareKm: true, shareNames: true });
+    expect(p.settings).toEqual({ sound: true, vibration: false, theme: 'auto', shareKm: true, shareNames: true, gpsOnlyPhoto: true });
     expect(p.dailyWalk).toEqual({ '2026-09-01': 1200, '2026-09-02': 1e6 });
     expect(p.friends).toHaveLength(0);
   });

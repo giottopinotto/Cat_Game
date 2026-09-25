@@ -2,7 +2,8 @@ import { X } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { SPECIES_NAME } from '../data/entries';
 import type { Species } from '../data/types';
-import { captureFixOk, tooFast, useLocation, type Fix } from '../game/location';
+import { captureFixOk, releaseLocation, startLocation, tooFast, useLocation, type Fix } from '../game/location';
+import { useGame } from '../game/store';
 import type { CaptureOutcome } from '../game/store';
 import { mapApi } from '../map/MapView';
 import { back } from '../router';
@@ -88,6 +89,14 @@ export function CaptureScreen() {
     );
   }, []);
   useEffect(loadModels, [loadModels]);
+
+  // Posizione solo per le foto: il GPS si accende qui e si spegne uscendo.
+  useEffect(() => {
+    startLocation();
+    return () => {
+      if (useGame.getState().player.settings.gpsOnlyPhoto) releaseLocation();
+    };
+  }, []);
 
   // Fotocamera posteriore, accesa solo quando serve.
   useEffect(() => {

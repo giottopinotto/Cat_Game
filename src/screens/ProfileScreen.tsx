@@ -1,4 +1,4 @@
-import { CalendarDays, Download, House, Info, Moon, Pencil, ShieldCheck, Smartphone, Trash2, Upload, Users, Vibrate, Volume2 } from 'lucide-react';
+import { CalendarDays, Download, House, Info, MapPinOff, Moon, Pencil, ShieldCheck, Smartphone, Trash2, Upload, Users, Vibrate, Volume2 } from 'lucide-react';
 import { useMemo, useRef, useState } from 'react';
 import { BADGES, badgeTier, TIER_NAMES, tierText, type BadgeSummary } from '../game/badges';
 import { importBackup } from '../game/backup';
@@ -160,6 +160,20 @@ export function ProfileScreen() {
               {player.home ? 'Attiva: le catture vicino a casa non salvano la posizione precisa' : 'Nasconde la posizione delle catture vicino a casa'}
             </div>
           </span>
+        </button>
+        <button onClick={() => updateSettings({ gpsOnlyPhoto: !settings.gpsOnlyPhoto })}>
+          <span className="ico">
+            <MapPinOff size={19} />
+          </span>
+          <span className="grow">
+            Posizione solo per le foto
+            <div className="muted" style={{ fontSize: 13 }}>
+              {settings.gpsOnlyPhoto
+                ? 'Il GPS si accende solo quando fotografi. Km, zone esplorate e sfide di cammino sono in pausa'
+                : 'Il GPS resta acceso mentre giochi: conta km e zone esplorate'}
+            </div>
+          </span>
+          <Switch on={settings.gpsOnlyPhoto} />
         </button>
         <button onClick={() => updateSettings({ sound: !settings.sound })}>
           <span className="ico">

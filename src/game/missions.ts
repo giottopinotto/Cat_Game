@@ -83,8 +83,21 @@ export function missionIcon(type: MissionType): string {
   return icons[type];
 }
 
+const MOVE_TYPES: MissionType[] = ['walk', 'explore'];
+
+/**
+ * Con la posizione attiva solo per le foto non si possono contare passi e zone:
+ * le sfide di movimento non ancora completate diventano sfide di cattura.
+ */
+export function withoutMoveMissions(list: Mission[]): Mission[] {
+  return list.map((m) =>
+    MOVE_TYPES.includes(m.type) && !missionDone(m) ? { id: m.id, type: 'catch_any', target: 2, reward: 150, progress: 0 } : m,
+  );
+}
+
 /** Genera le 3 sfide del giorno in modo deterministico dalla data. */
-export function generateDailyMissions(day: string, animalsCount: number): Mission[] {
+export function generateDailyMissions(day: string, animalsCount: number, photoOnly = false): Mission[] {
+  if (photoOnly) return withoutMoveMissions(generateDailyMissions(day, animalsCount));
   const rnd = seededRandom(hashString(`zampe-${day}`));
   const pick = <T,>(arr: T[]): T => arr[Math.floor(rnd() * arr.length)];
 

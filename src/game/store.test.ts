@@ -91,6 +91,21 @@ describe('cattura', () => {
 });
 
 describe('camminata ed esplorazione', () => {
+  beforeEach(() => useGame.getState().updateSettings({ gpsOnlyPhoto: false }));
+
+  it('con la posizione solo per le foto non si registra nessuno spostamento', () => {
+    useGame.getState().updateSettings({ gpsOnlyPhoto: true });
+    const at = Date.now();
+    const s = useGame.getState();
+    s.handleFix({ lat: 45.4642, lng: 9.19, accuracy: 10, heading: null, speed: null, at });
+    s.handleFix({ lat: 45.4652, lng: 9.19, accuracy: 10, heading: null, speed: null, at: at + 80_000 });
+    const p = useGame.getState().player;
+    expect(p.zones).toHaveLength(0);
+    expect(p.walkedM).toBe(0);
+    expect(p.dailyWalk).toEqual({});
+    expect(p.missions.list.some((m) => (m.type === 'walk' || m.type === 'explore') && m.progress < m.target)).toBe(false);
+  });
+
   it('una nuova zona dà XP; spostarsi a piedi conta i metri', () => {
     const at = Date.now();
     const s = useGame.getState();
