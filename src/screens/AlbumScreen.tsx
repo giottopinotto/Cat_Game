@@ -5,7 +5,8 @@ import { usePhoto } from '../game/photos';
 import { useGame } from '../game/store';
 import { back, go } from '../router';
 import { MiniCard } from '../ui/AnimalCard';
-import { RarityPill, rarityStyle, Sheet, Silhouette, XpBar } from '../ui/common';
+import { RarityPill, rarityStyle, Sheet, XpBar } from '../ui/common';
+import { GameIcon, Silhouette, SpeciesIcon } from '../ui/icons';
 
 type Show = 'all' | 'found' | 'missing';
 
@@ -37,7 +38,7 @@ export function AlbumScreen({ entryId }: { entryId?: string }) {
       <div className="segmented" style={{ marginBottom: 16 }}>
         {(['dog', 'cat'] as Species[]).map((s) => (
           <button key={s} className={species === s ? 'active' : ''} onClick={() => setSpecies(s)}>
-            {SPECIES_NAME[s].emoji} {SPECIES_NAME[s].many}
+            <SpeciesIcon species={s} /> {SPECIES_NAME[s].many}
           </button>
         ))}
       </div>
@@ -114,7 +115,9 @@ function EntrySheet({ entry, animals }: { entry: BreedEntry; animals: Animal[] }
         </div>
       </div>
       <div className="fact">
-        <span className="bulb">💡</span>
+        <span className="bulb">
+          <GameIcon name="lightbulb" size={22} />
+        </span>
         <span>{entry.fact}</span>
       </div>
       <div className="section-title" style={{ marginTop: 18 }}>

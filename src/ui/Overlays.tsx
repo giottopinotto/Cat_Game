@@ -1,7 +1,7 @@
 import { useGame } from '../game/store';
 import { TIER_NAMES, tierText } from '../game/badges';
 import { levelTitle } from '../game/progress';
-import { Medal } from './icons';
+import { GameIcon, IconBubble, Medal } from './icons';
 
 export function Toasts() {
   const toasts = useGame((s) => s.toasts);
@@ -9,7 +9,7 @@ export function Toasts() {
     <div className="toasts" aria-live="polite">
       {toasts.map((t) => (
         <div className="toast" key={t.id}>
-          <span>{t.icon}</span>
+          <GameIcon name={t.icon} size={18} />
           <span>{t.text}</span>
         </div>
       ))}
@@ -28,7 +28,9 @@ export function Celebrations() {
         <div className="rays" />
         {c.kind === 'level' ? (
           <>
-            <div className="big">🎉</div>
+            <div className="big" style={{ display: 'flex', justifyContent: 'center' }}>
+              <IconBubble name="party" size={96} tone="gold" />
+            </div>
             <h2>Livello {c.level}!</h2>
             {levelTitle(c.level) !== levelTitle(c.level - 1) ? (
               <p>

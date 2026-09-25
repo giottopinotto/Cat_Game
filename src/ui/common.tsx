@@ -1,6 +1,6 @@
 import { useEffect, type CSSProperties, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
-import { RARITY_INFO, type Rarity, type Species } from '../data/types';
+import { RARITY_INFO, type Rarity } from '../data/types';
 
 export function rarityStyle(r: Rarity): CSSProperties {
   return { '--rarity': RARITY_INFO[r].color } as CSSProperties;
@@ -20,18 +20,6 @@ export function XpBar({ value, max, style }: { value: number; max: number; style
     <div className="xp-bar" style={style}>
       <div style={{ width: `${pct}%` }} />
     </div>
-  );
-}
-
-export function Hearts({ level, max = 5 }: { level: number; max?: number }) {
-  return (
-    <span className="hearts" aria-label={`Amicizia ${level} su ${max}`}>
-      {Array.from({ length: max }, (_, i) => (
-        <span key={i} style={{ opacity: i < level ? 1 : 0.25 }}>
-          {i < level ? '❤️' : '🤍'}
-        </span>
-      ))}
-    </span>
   );
 }
 
@@ -55,14 +43,6 @@ export function Sheet({ onClose, children }: { onClose: () => void; children: Re
       </div>
     </>,
     document.body,
-  );
-}
-
-export function Silhouette({ species, size = 44 }: { species: Species; size?: number }) {
-  return (
-    <span style={{ fontSize: size, filter: 'brightness(0)', opacity: 0.13, lineHeight: 1 }} aria-hidden>
-      {species === 'cat' ? '🐈' : '🐕'}
-    </span>
   );
 }
 

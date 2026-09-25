@@ -8,7 +8,8 @@ import { useGame } from '../game/store';
 import { mapApi } from '../map/MapView';
 import { back, go } from '../router';
 import { AnimalCard } from '../ui/AnimalCard';
-import { formatDate, Hearts, RarityPill, Sheet } from '../ui/common';
+import { formatDate, RarityPill, Sheet } from '../ui/common';
+import { GameIcon, Hearts } from '../ui/icons';
 import { shareAnimal } from '../ui/shareCard';
 
 export function AnimalScreen({ id }: { id: string }) {
@@ -21,7 +22,9 @@ export function AnimalScreen({ id }: { id: string }) {
     return (
       <div className="screen no-nav">
         <div className="empty">
-          <div className="e">🐾</div>
+          <div className="e">
+          <GameIcon name="paw" size={56} />
+        </div>
           <h2>Animale non trovato</h2>
           <button className="btn btn-primary" onClick={() => go('collezione', true)}>
             Vai alla collezione
@@ -62,7 +65,9 @@ export function AnimalScreen({ id }: { id: string }) {
 
       <AnimalCard animal={animal} />
 
-      <div className="section-title">💞 Amicizia</div>
+      <div className="section-title">
+        <GameIcon name="heart" /> Amicizia
+      </div>
       <div className="panel">
         <div className="row" style={{ justifyContent: 'space-between' }}>
           <b>{FRIEND_NAMES[fl - 1]}</b>
@@ -75,7 +80,9 @@ export function AnimalScreen({ id }: { id: string }) {
         </p>
       </div>
 
-      <div className="section-title">📋 Scheda</div>
+      <div className="section-title">
+        <GameIcon name="clipboard" /> Scheda
+      </div>
       <dl className="info-list">
         <div>
           <dt>Razza</dt>
@@ -107,15 +114,21 @@ export function AnimalScreen({ id }: { id: string }) {
 
       {entry && (
         <>
-          <div className="section-title">💡 Lo sapevi?</div>
+          <div className="section-title">
+            <GameIcon name="lightbulb" /> Lo sapevi?
+          </div>
           <div className="fact">
-            <span className="bulb">💡</span>
+            <span className="bulb">
+              <GameIcon name="lightbulb" size={22} />
+            </span>
             <span>{entry.fact}</span>
           </div>
         </>
       )}
 
-      <div className="section-title">📸 Ricordi</div>
+      <div className="section-title">
+        <GameIcon name="images" /> Ricordi
+      </div>
       <p className="muted" style={{ fontSize: 14, marginBottom: 10 }}>
         Tocca una foto per usarla come copertina della carta.
       </p>

@@ -8,7 +8,7 @@ import { dayKey, levelInfo } from '../game/progress';
 import { useGame } from '../game/store';
 import { go } from '../router';
 import { XpBar } from '../ui/common';
-import { AvatarArt } from '../ui/icons';
+import { AvatarArt, GameIcon, IconBubble } from '../ui/icons';
 import { MissionsSheet } from './MissionsSheet';
 import { recenter, useFollow } from './MapView';
 
@@ -54,13 +54,13 @@ export function MapHud() {
           </div>
         </button>
         <button className={`missions-pill ${done === 3 ? 'done' : ''}`} onClick={() => setShowMissions(true)}>
-          🎯 Sfide <span className="count">{done}/3</span>
+          <GameIcon name="target" /> Sfide <span className="count">{done}/3</span>
         </button>
       </div>
 
       {status !== 'ok' && (
         <div className="gps-banner">
-          <span className="emoji">{status === 'denied' ? '📍' : '🛰️'}</span>
+          <IconBubble name={status === 'denied' ? 'pin' : 'satellite'} size={42} />
           <div className="grow">
             {status === 'denied' ? (
               <>
@@ -111,7 +111,7 @@ function NearbyHint({ id, name, photo, onClose }: { id: string; name: string; ph
       <button className="grow" style={{ textAlign: 'left' }} onClick={() => go(`animale/${id}`)}>
         <b>{name} vive qui vicino!</b>
         <div className="muted" style={{ fontSize: 13 }}>
-          Se lo vedi, fotografalo di nuovo per aumentare la vostra amicizia 💞
+          Se lo vedi, fotografalo di nuovo per aumentare la vostra amicizia
         </div>
       </button>
       <button aria-label="Chiudi" onClick={onClose} className="muted">

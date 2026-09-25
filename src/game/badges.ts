@@ -15,7 +15,6 @@ export interface BadgeSummary {
 export interface BadgeDef {
   id: string;
   name: string;
-  emoji: string;
   tiers: [number, number, number];
   unit: string;
   metric: (s: BadgeSummary) => number;
@@ -32,15 +31,15 @@ export const TIER_XP = [50, 100, 200];
 const RARITY_NAMES = ['Comune', 'Non comune', 'Raro', 'Epico', 'Leggendario'];
 
 export const BADGES: BadgeDef[] = [
-  { id: 'gattaro', name: 'Gattaro', emoji: '🐱', tiers: [1, 10, 50], unit: 'gatti catturati', metric: (s) => s.cats },
-  { id: 'cinofilo', name: 'Cinofilo', emoji: '🐶', tiers: [1, 10, 50], unit: 'cani catturati', metric: (s) => s.dogs },
-  { id: 'collezionista', name: 'Collezionista', emoji: '📖', tiers: [5, 20, 50], unit: "voci dell'album", metric: (s) => s.entries },
-  { id: 'esploratore', name: 'Esploratore', emoji: '🧭', tiers: [10, 50, 200], unit: 'zone esplorate', metric: (s) => s.zones },
-  { id: 'camminatore', name: 'Camminatore', emoji: '👟', tiers: [5, 25, 100], unit: 'km percorsi', metric: (s) => Math.floor(s.km) },
+  { id: 'gattaro', name: 'Gattaro', tiers: [1, 10, 50], unit: 'gatti catturati', metric: (s) => s.cats },
+  { id: 'cinofilo', name: 'Cinofilo', tiers: [1, 10, 50], unit: 'cani catturati', metric: (s) => s.dogs },
+  { id: 'collezionista', name: 'Collezionista', tiers: [5, 20, 50], unit: "voci dell'album", metric: (s) => s.entries },
+  { id: 'esploratore', name: 'Esploratore', tiers: [10, 50, 200], unit: 'zone esplorate', metric: (s) => s.zones },
+  { id: 'camminatore', name: 'Camminatore', tiers: [5, 25, 100], unit: 'km percorsi', metric: (s) => Math.floor(s.km) },
   {
     id: 'amico',
     name: 'Amico fedele',
-    emoji: '💞',
+   
     tiers: [2, 3, 5],
     unit: 'livello di amicizia',
     metric: (s) => s.maxFriend,
@@ -50,17 +49,17 @@ export const BADGES: BadgeDef[] = [
   {
     id: 'rarita',
     name: 'Cacciatore di rarità',
-    emoji: '💎',
+   
     tiers: [2, 3, 4],
     unit: 'rarità',
     metric: (s) => s.bestRarity,
     tierText: (n) => `Cattura un animale ${RARITY_NAMES[n]}`,
     goal: (n) => `Trova un ${RARITY_NAMES[n]}`,
   },
-  { id: 'arcobaleno', name: 'Arcobaleno', emoji: '🌈', tiers: [3, 6, 10], unit: 'mantelli di gatto diversi', metric: (s) => s.coats },
-  { id: 'nottambulo', name: 'Nottambulo', emoji: '🌙', tiers: [1, 5, 20], unit: 'catture di notte (21-5)', metric: (s) => s.night },
-  { id: 'costanza', name: 'Costanza', emoji: '🔥', tiers: [3, 7, 30], unit: 'giorni di fila', metric: (s) => s.streakBest },
-  { id: 'parco', name: 'Amico dei parchi', emoji: '🌳', tiers: [1, 10, 30], unit: 'catture nei parchi', metric: (s) => s.park },
+  { id: 'arcobaleno', name: 'Arcobaleno', tiers: [3, 6, 10], unit: 'mantelli di gatto diversi', metric: (s) => s.coats },
+  { id: 'nottambulo', name: 'Nottambulo', tiers: [1, 5, 20], unit: 'catture di notte (21-5)', metric: (s) => s.night },
+  { id: 'costanza', name: 'Costanza', tiers: [3, 7, 30], unit: 'giorni di fila', metric: (s) => s.streakBest },
+  { id: 'parco', name: 'Amico dei parchi', tiers: [1, 10, 30], unit: 'catture nei parchi', metric: (s) => s.park },
 ];
 
 export function tierText(b: BadgeDef, tier: number): string {

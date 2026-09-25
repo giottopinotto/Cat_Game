@@ -7,6 +7,7 @@ import type { CaptureOutcome } from '../game/store';
 import { mapApi } from '../map/MapView';
 import { back } from '../router';
 import { vibrate } from '../ui/common';
+import { GameIcon, IconBubble } from '../ui/icons';
 import { analyzePhoto, type Analysis } from '../vision/analyze';
 import { detectAnimals, downscale, loadDetector, loadVision, pickMain, scaleDetections, type Box } from '../vision/engine';
 import { BLURRY, grabFrame, makePhotos, sharpness } from '../vision/photo';
@@ -226,10 +227,10 @@ export function CaptureScreen() {
   let status = 'Inquadra un cane o un gatto';
   if (models === 'loading') status = "Preparo l'occhio magico…";
   else if (models === 'error') status = 'Errore nel caricare la AI';
-  else if (moving) status = '🚗 Ti stai muovendo troppo veloce: fermati per catturare';
+  else if (moving) status = 'Ti stai muovendo troppo veloce: fermati per catturare';
   else if (!gpsOk) status = gpsStatus === 'denied' ? 'Serve la posizione GPS' : 'Aspetto il segnale GPS…';
-  else if (det && det.area < SMALL_AREA) status = zoom ? '🔍 È piccolo: usa lo zoom qui sotto' : '🔍 È un po\' lontano, ma puoi scattare';
-  else if (det) status = `${SPECIES_NAME[det.species].emoji} ${SPECIES_NAME[det.species].one} trovato! Scatta!`;
+  else if (det && det.area < SMALL_AREA) status = zoom ? 'È piccolo: usa lo zoom qui sotto' : 'È un po\' lontano, ma puoi scattare';
+  else if (det) status = `${SPECIES_NAME[det.species].one} trovato! Scatta!`;
 
   function applyZoom(value: number) {
     const track = streamRef.current?.getVideoTracks()[0];
@@ -269,7 +270,7 @@ export function CaptureScreen() {
         </button>
         {phase.k === 'live' && <div className={`capture-status ${det && canShoot ? 'found' : ''}`}>{status}</div>}
         <span className="gps-chip" title="Precisione GPS">
-          {gpsOk ? `📍 ±${Math.round(fix!.accuracy)} m` : '📍 …'}
+          <GameIcon name="pin" size={14} /> {gpsOk ? `±${Math.round(fix!.accuracy)} m` : '…'}
         </span>
       </div>
 
@@ -287,7 +288,7 @@ export function CaptureScreen() {
           <button className={`shutter ${det && canShoot ? 'ready' : ''}`} disabled={!canShoot} aria-label="Scatta" onClick={shoot}>
             <span />
           </button>
-          <div className="capture-hint">Non avvicinarti troppo: la foto va bene anche da lontano 🐾</div>
+          <div className="capture-hint">Non avvicinarti troppo: la foto va bene anche da lontano</div>
         </div>
       )}
 
@@ -296,12 +297,14 @@ export function CaptureScreen() {
       {phase.k === 'analyzing' && (
         <div className="scanning">
           <div className="line" />
-          <div className="label">🔎 Analizzo la foto…</div>
+          <div className="label row">
+            <GameIcon name="search" /> Analizzo la foto…
+          </div>
         </div>
       )}
 
       {phase.k === 'notfound' && (
-        <Message emoji="🙈" title="Nessun cane o gatto" text="Non sono riuscito a trovarlo nella foto. Prova a inquadrarlo meglio, con più luce e senza muoverti." action="Riprova" onAction={again} />
+        <Message icon="search" title="Nessun cane o gatto" text="Non sono riuscito a trovarlo nella foto. Prova a inquadrarlo meglio, con più luce e senza muoverti." action="Riprova" onAction={again} />
       )}
 
       {phase.k === 'live' && camera === 'starting' && (
@@ -314,7 +317,7 @@ export function CaptureScreen() {
       )}
       {wantCamera && camera === 'denied' && (
         <Message
-          emoji="📷"
+          icon="camera"
           title="Serve la fotocamera"
           text="Per catturare gli animali devi permettere l'uso della fotocamera. Attivala nelle impostazioni del browser per questo sito e riprova."
           action="Torna alla mappa"
@@ -323,7 +326,7 @@ export function CaptureScreen() {
       )}
       {wantCamera && (camera === 'nocamera' || camera === 'unsupported') && (
         <Message
-          emoji="📵"
+          icon="camera-off"
           title="Fotocamera non disponibile"
           text={
             camera === 'unsupported'
@@ -336,7 +339,7 @@ export function CaptureScreen() {
       )}
       {models === 'error' && phase.k === 'live' && (
         <Message
-          emoji="🤖"
+          icon="bot"
           title="AI non caricata"
           text="Serve una connessione a internet per scaricare il riconoscimento la prima volta (circa 35 MB, una volta sola: meglio con il Wi-Fi)."
           action="Riprova"
@@ -352,11 +355,13 @@ export function CaptureScreen() {
   );
 }
 
-function Message(props: { emoji: string; title: string; text: string; action: string; onAction: () => void }) {
+function Message(props: { icon: string; title: string; text: string; action: string; onAction: () => void }) {
   return (
     <div className="capture-msg">
       <div className="box">
-        <div className="emoji">{props.emoji}</div>
+        <div className="emoji">
+          <IconBubble name={props.icon} size={76} />
+        </div>
         <h2>{props.title}</h2>
         <p>{props.text}</p>
         <button className="btn btn-primary" onClick={props.onAction}>

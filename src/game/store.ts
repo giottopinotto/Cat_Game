@@ -42,6 +42,7 @@ export interface PlayerData {
 }
 
 export interface Reward {
+  /** Nome dell'icona (vedi ui/icons.tsx). */
   icon: string;
   label: string;
   xp: number;
@@ -75,6 +76,7 @@ export interface CaptureOutcome {
 
 export interface Toast {
   id: number;
+  /** Nome dell'icona (vedi ui/icons.tsx). */
   icon: string;
   text: string;
 }
@@ -160,7 +162,7 @@ function withMissions(p: PlayerData, fn: (m: Mission) => Mission) {
   let bonusClaimed = p.missions.bonusClaimed;
   if (!bonusClaimed && list.every(missionDone)) {
     bonusClaimed = true;
-    rewards.push({ icon: '🎁', label: 'Tutte le sfide di oggi!', xp: ALL_DONE_BONUS });
+    rewards.push({ icon: 'gift', label: 'Tutte le sfide di oggi!', xp: ALL_DONE_BONUS });
   }
   return {
     player: { ...p, missions: { ...p.missions, list, bonusClaimed }, missionsDone: p.missionsDone + completed.length },
@@ -179,7 +181,7 @@ function withBadges(p: PlayerData, animals: Animal[]) {
     const prev = badgeTiers[b.id] ?? 0;
     for (let t = prev + 1; t <= tier; t++) {
       earned.push({ badge: b, tier: t });
-      rewards.push({ icon: b.emoji, label: `Medaglia ${b.name} (${TIER_NAMES[t - 1]})`, xp: TIER_XP[t - 1] });
+      rewards.push({ icon: 'medal', label: `Medaglia ${b.name} (${TIER_NAMES[t - 1]})`, xp: TIER_XP[t - 1] });
     }
     if (tier > prev) badgeTiers[b.id] = tier;
   }
@@ -261,7 +263,7 @@ export const useGame = create<GameState>((set, get) => {
       walkedM: p.walkedM + walked,
       zones: newZone ? [...p.zones, zone!] : p.zones,
     };
-    const base: Reward[] = newZone ? [{ icon: '🧭', label: 'Nuova zona esplorata', xp: XP_ZONE }] : [];
+    const base: Reward[] = newZone ? [{ icon: 'compass', label: 'Nuova zona esplorata', xp: XP_ZONE }] : [];
     const r = settle(updated, get().animals, base, (m) => {
       let n = walked ? applyWalkToMission(m, walked) : m;
       if (newZone) n = applyExploreToMission(n);
@@ -340,9 +342,9 @@ export const useGame = create<GameState>((set, get) => {
       const newEntry = !animals.some((a) => a.entryId === entry.id);
       const day = today();
       const firstToday = !player.activeDays.includes(day);
-      const base: Reward[] = [{ icon: '📸', label: `Cattura ${RARITY_INFO[rarity].label.toLowerCase()}`, xp: RARITY_INFO[rarity].xp }];
-      if (newEntry) base.push({ icon: '📖', label: "Nuova voce dell'album", xp: XP_NEW_ENTRY });
-      if (firstToday) base.push({ icon: '☀️', label: 'Prima cattura di oggi', xp: XP_FIRST_TODAY });
+      const base: Reward[] = [{ icon: 'camera', label: `Cattura ${RARITY_INFO[rarity].label.toLowerCase()}`, xp: RARITY_INFO[rarity].xp }];
+      if (newEntry) base.push({ icon: 'book', label: "Nuova voce dell'album", xp: XP_NEW_ENTRY });
+      if (firstToday) base.push({ icon: 'sun', label: 'Prima cattura di oggi', xp: XP_FIRST_TODAY });
 
       const updatedPlayer = firstToday ? { ...player, activeDays: [...player.activeDays, day] } : player;
       const ev = captureEvent(d.species, entry.id, rarity, false, newEntry, d.park);
@@ -378,12 +380,12 @@ export const useGame = create<GameState>((set, get) => {
       const before = friendshipLevel(a);
       const after = friendshipLevel(updated);
       const base: Reward[] = [];
-      if (!sameDay) base.push({ icon: '💞', label: `Hai rivisto ${a.name}`, xp: XP_REENCOUNTER });
-      if (after > before) base.push({ icon: '❤️', label: `Amicizia livello ${after}`, xp: 50 * after });
+      if (!sameDay) base.push({ icon: 'heart', label: `Hai rivisto ${a.name}`, xp: XP_REENCOUNTER });
+      if (after > before) base.push({ icon: 'friends', label: `Amicizia livello ${after}`, xp: 50 * after });
 
       const { player, animals } = get();
       const firstToday = !player.activeDays.includes(day);
-      if (firstToday) base.push({ icon: '☀️', label: 'Primo incontro di oggi', xp: XP_FIRST_TODAY });
+      if (firstToday) base.push({ icon: 'sun', label: 'Primo incontro di oggi', xp: XP_FIRST_TODAY });
       const updatedPlayer = firstToday ? { ...player, activeDays: [...player.activeDays, day] } : player;
       const ev = captureEvent(a.species, a.entryId, a.rarity, true, false, d.park);
       const r = settle(

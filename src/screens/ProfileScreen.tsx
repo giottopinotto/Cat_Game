@@ -9,7 +9,7 @@ import { today, useGame } from '../game/store';
 import { badgeSummary, streaks } from '../game/summary';
 import { isIOS, isStandalone, promptInstall, useInstall } from '../pwa';
 import { formatNumber, Sheet, XpBar } from '../ui/common';
-import { AvatarArt, Medal } from '../ui/icons';
+import { AvatarArt, GameIcon, Medal } from '../ui/icons';
 import { AVATARS, Rules } from '../ui/Rules';
 import { downloadBlob } from '../ui/shareCard';
 
@@ -45,7 +45,7 @@ export function ProfileScreen() {
       }
       downloadBlob(blob, filename);
     } catch {
-      toast('⚠️', 'Backup non riuscito');
+      toast('alert', 'Backup non riuscito');
     }
   }
 
@@ -53,10 +53,10 @@ export function ProfileScreen() {
     if (!f) return;
     try {
       const n = await importBackup(f);
-      toast('✅', `Backup ripristinato: ${n} animali`);
+      toast('check', `Backup ripristinato: ${n} animali`);
       setTimeout(() => location.reload(), 900);
     } catch (e) {
-      toast('⚠️', (e as Error).message);
+      toast('alert', (e as Error).message);
     }
   }
 
@@ -67,7 +67,7 @@ export function ProfileScreen() {
     [formatDistance(player.walkedM), 'a piedi'],
     [formatNumber(player.zones.length), player.zones.length === 1 ? 'zona esplorata' : 'zone esplorate'],
     [formatNumber(player.missionsDone), player.missionsDone === 1 ? 'sfida completata' : 'sfide completate'],
-    [`${streak.current} 🔥`, 'giorni di fila'],
+    [String(streak.current), 'giorni di fila'],
     [String(streak.best), 'record di giorni'],
   ];
 
@@ -91,7 +91,9 @@ export function ProfileScreen() {
         </div>
       </div>
 
-      <div className="section-title">📊 Statistiche</div>
+      <div className="section-title">
+        <GameIcon name="chart" /> Statistiche
+      </div>
       <div className="stats-grid">
         {stats.map(([v, l]) => (
           <div className="stat-tile" key={l}>
@@ -101,7 +103,9 @@ export function ProfileScreen() {
         ))}
       </div>
 
-      <div className="section-title">🏅 Medaglie</div>
+      <div className="section-title">
+        <GameIcon name="award" /> Medaglie
+      </div>
       <div className="badges">
         {BADGES.map((b) => {
           const tier = badgeTier(b, summary);
@@ -118,7 +122,9 @@ export function ProfileScreen() {
         })}
       </div>
 
-      <div className="section-title">⚙️ Impostazioni</div>
+      <div className="section-title">
+        <GameIcon name="settings" /> Impostazioni
+      </div>
       <div className="menu">
         <button onClick={() => setOpen('edit')}>
           <span className="ico">
@@ -265,7 +271,9 @@ function BadgeSheet({ id, value, onClose }: { id: string; value: BadgeSummary; o
       <div style={{ marginTop: 14 }}>
         {b.tiers.map((_, i) => (
           <div key={i} className={`mission ${tier > i ? 'done' : ''}`}>
-            <div className="mi">{tier > i ? '✅' : ['🥉', '🥈', '🥇'][i]}</div>
+            <div className="mi">
+              {tier > i ? <GameIcon name="check" size={24} /> : <Medal badgeId={b.id} tier={i + 1} size={34} />}
+            </div>
             <div className="grow">
               <div className="mt">{TIER_NAMES[i]}</div>
               <div className="muted" style={{ fontSize: 14 }}>

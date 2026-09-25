@@ -8,6 +8,7 @@ import { distanceM, formatDistance } from '../game/geo';
 import { usePhoto } from '../game/photos';
 import { rarityFor, useGame, type CaptureOutcome } from '../game/store';
 import { RarityPill, rarityStyle, Sheet, Switch } from '../ui/common';
+import { GameIcon, IconBubble, SpeciesIcon } from '../ui/icons';
 import type { Shot } from './CaptureScreen';
 
 const KNOWN_RADIUS_M = 250;
@@ -120,7 +121,7 @@ export function ConfirmPanel({ shot, onRetake, onDone }: { shot: Shot; onRetake:
       </div>
 
       <div className="ai-says">
-        <span className="robot">🤖</span>
+        <IconBubble name="sparkles" size={40} />
         <div>
           Mi sembra un <b>{SPECIES_NAME[analysis.species].one.toLowerCase()}</b>
           {aiEntry && (
@@ -134,16 +135,20 @@ export function ConfirmPanel({ shot, onRetake, onDone }: { shot: Shot; onRetake:
 
       {shot.blurry && (
         <p className="panel" style={{ marginTop: 10, fontSize: 14 }}>
-          📷 La foto sembra un po' mossa: se l'AI sbaglia, prova a <b>rifarla</b> tenendo fermo il telefono.
+          <GameIcon name="camera" size={16} /> La foto sembra un po' mossa: se l'AI sbaglia, prova a <b>rifarla</b> tenendo fermo il telefono.
         </p>
       )}
 
       {nearby.length > 0 && (
         <>
-          <div className="section-title">💞 È un animale che conosci già?</div>
+          <div className="section-title">
+            <GameIcon name="heart" /> È un animale che conosci già?
+          </div>
           <div className="known">
             <button className={knownId === null ? 'active' : ''} onClick={() => setKnownId(null)}>
-              <div style={{ width: 80, height: 80, display: 'grid', placeItems: 'center', fontSize: 36, margin: '0 auto 4px' }}>✨</div>
+              <div style={{ width: 80, height: 80, display: 'grid', placeItems: 'center', margin: '0 auto 4px' }}>
+                <IconBubble name="sparkles" size={52} />
+              </div>
               <div>No, è nuovo</div>
             </button>
             {nearby.map(({ a, d }) => (
@@ -163,7 +168,7 @@ export function ConfirmPanel({ shot, onRetake, onDone }: { shot: Shot; onRetake:
           <div className="segmented">
             {(['dog', 'cat'] as Species[]).map((s) => (
               <button key={s} className={species === s ? 'active' : ''} onClick={() => switchSpecies(s)}>
-                {SPECIES_NAME[s].emoji} {SPECIES_NAME[s].one}
+                <SpeciesIcon species={s} /> {SPECIES_NAME[s].one}
               </button>
             ))}
           </div>
@@ -224,7 +229,7 @@ export function ConfirmPanel({ shot, onRetake, onDone }: { shot: Shot; onRetake:
           )}
 
           <button className="switch-row" onClick={() => setHeterochromia((h) => !h)}>
-            <span style={{ fontSize: 26 }}>✨</span>
+            <IconBubble name="sparkles" size={40} tone="gold" />
             <span className="grow">
               <b>Ha gli occhi di due colori?</b>
               <div className="muted" style={{ fontSize: 13 }}>
@@ -243,7 +248,9 @@ export function ConfirmPanel({ shot, onRetake, onDone }: { shot: Shot; onRetake:
               </button>
             </div>
           </label>
-          {shot.park && <p className="muted" style={{ marginTop: 12 }}>🌳 Sei in un parco!</p>}
+          {shot.park && <p className="muted row" style={{ marginTop: 12 }}>
+              <GameIcon name="trees" /> Sei in un parco!
+            </p>}
         </>
       )}
 
@@ -258,7 +265,17 @@ export function ConfirmPanel({ shot, onRetake, onDone }: { shot: Shot; onRetake:
           Rifai
         </button>
         <button className={`btn ${known ? 'btn-teal' : 'btn-primary'} grow`} onClick={save} disabled={saving}>
-          {saving ? 'Salvo…' : known ? '💞 Salva incontro' : '📸 Cattura!'}
+          {saving ? (
+            'Salvo…'
+          ) : known ? (
+            <>
+              <GameIcon name="heart" /> Salva incontro
+            </>
+          ) : (
+            <>
+              <GameIcon name="camera" /> Cattura!
+            </>
+          )}
         </button>
       </div>
 

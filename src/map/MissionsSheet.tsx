@@ -3,6 +3,7 @@ import { ALL_DONE_BONUS, missionDone, missionIcon, missionText, type Mission } f
 import { useGame } from '../game/store';
 import { formatDistance } from '../game/geo';
 import { Sheet, XpBar } from '../ui/common';
+import { GameIcon } from '../ui/icons';
 
 function progressText(m: Mission): string {
   if (m.type === 'walk') return `${formatDistance(m.progress)} / ${formatDistance(m.target)}`;
@@ -29,7 +30,9 @@ export function MissionsSheet({ onClose }: { onClose: () => void }) {
 
   return (
     <Sheet onClose={onClose}>
-      <h2>🎯 Sfide di oggi</h2>
+      <h2 className="row">
+        <GameIcon name="target" size={24} /> Sfide di oggi
+      </h2>
       <p className="muted" style={{ marginBottom: 14 }}>
         Nuove sfide tra {untilMidnight()}
       </p>
@@ -37,7 +40,9 @@ export function MissionsSheet({ onClose }: { onClose: () => void }) {
         const done = missionDone(m);
         return (
           <div key={m.id} className={`mission ${done ? 'done' : ''}`}>
-            <div className="mi">{done ? '✅' : missionIcon(m.type)}</div>
+            <div className="mi">
+              <GameIcon name={done ? 'check' : missionIcon(m.type)} size={24} />
+            </div>
             <div className="grow">
               <div className="mt">{missionText(m)}</div>
               <XpBar value={m.progress} max={m.target} />
@@ -50,7 +55,9 @@ export function MissionsSheet({ onClose }: { onClose: () => void }) {
         );
       })}
       <div className={`mission ${missions.bonusClaimed ? 'done' : ''}`} style={{ background: '#fff8d9' }}>
-        <div className="mi">{missions.bonusClaimed ? '✅' : '🎁'}</div>
+        <div className="mi">
+          <GameIcon name={missions.bonusClaimed ? 'check' : 'gift'} size={24} />
+        </div>
         <div className="grow">
           <div className="mt">Bonus: completa tutte e 3 le sfide</div>
         </div>

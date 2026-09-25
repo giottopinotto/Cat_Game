@@ -34,7 +34,7 @@ export function baseStats(entry: BreedEntry): Stats {
 export const LABEL_TO_ENTRY = new Map<string, BreedEntry>();
 for (const e of ALL_ENTRIES) for (const l of e.labels ?? []) LABEL_TO_ENTRY.set(l, e);
 
-export const SPECIES_NAME: Record<Species, { one: string; many: string; emoji: string }> = {
-  cat: { one: 'Gatto', many: 'Gatti', emoji: '🐱' },
-  dog: { one: 'Cane', many: 'Cani', emoji: '🐶' },
+export const SPECIES_NAME: Record<Species, { one: string; many: string }> = {
+  cat: { one: 'Gatto', many: 'Gatti' },
+  dog: { one: 'Cane', many: 'Cani' },
 };

@@ -2,16 +2,20 @@ import { getEntry, SPECIES_NAME } from '../data/entries';
 import { RARITY_INFO, rarityIndex, STAT_LABELS, type Animal } from '../data/types';
 import { usePhoto } from '../game/photos';
 import { friendshipLevel, pawPoints } from '../game/progress';
-import { formatDate, Hearts, RarityPill, rarityStyle } from './common';
+import { formatDate, RarityPill, rarityStyle } from './common';
+import { GameIcon, Hearts, SpeciesIcon } from './icons';
+import { useTilt } from './useTilt';
 
 export function AnimalCard({ animal, photoUrl }: { animal: Animal; photoUrl?: string }) {
+  const tiltRef = useTilt<HTMLDivElement>();
   const entry = getEntry(animal.entryId);
   const stored = usePhoto(photoUrl ? undefined : animal.coverPhotoId, 'card');
   const url = photoUrl ?? stored;
   const first = animal.encounters[0];
   return (
-    <div className={`card ${rarityIndex(animal.rarity) >= 3 ? 'holo' : ''}`} style={rarityStyle(animal.rarity)}>
+    <div ref={tiltRef} className={`card r-${animal.rarity} ${rarityIndex(animal.rarity) >= 2 ? 'holo' : ''}`} style={rarityStyle(animal.rarity)}>
       <div className="card-inner">
+        <div className="card-shine" aria-hidden />
         <div className="card-photo">
           {url && <img src={url} alt={animal.name} />}
           <div className="pz">
@@ -19,9 +23,13 @@ export function AnimalCard({ animal, photoUrl }: { animal: Animal; photoUrl?: st
             {pawPoints(animal)}
           </div>
           <div className="species" title={SPECIES_NAME[animal.species].one}>
-            {SPECIES_NAME[animal.species].emoji}
+            <SpeciesIcon species={animal.species} size={20} />
           </div>
-          {animal.heterochromia && <div className="het">✨ Occhi di due colori</div>}
+          {animal.heterochromia && (
+            <div className="het">
+              <GameIcon name="sparkles" size={13} /> Occhi di due colori
+            </div>
+          )}
         </div>
         <div className="card-body">
           <div className="row">
@@ -42,7 +50,8 @@ export function AnimalCard({ animal, photoUrl }: { animal: Animal; photoUrl?: st
             </div>
           ))}
           <div className="card-foot">
-            <span>📸 {animal.encounters.length} {animal.encounters.length === 1 ? 'incontro' : 'incontri'}</span>
+            <span className="row" style={{ gap: 4 }}>
+              <GameIcon name="camera" size={14} /> {animal.encounters.length} {animal.encounters.length === 1 ? 'incontro' : 'incontri'}</span>
             <span style={{ whiteSpace: 'nowrap' }}>{first ? formatDate(first.at) : ''}</span>
           </div>
         </div>
@@ -63,7 +72,7 @@ export function MiniCard({ animal, onClick }: { animal: Animal; onClick: () => v
         </div>
         <div className="mini-body">
           <div className="mini-name">
-            {SPECIES_NAME[animal.species].emoji} {animal.name}
+            <SpeciesIcon species={animal.species} size={15} /> {animal.name}
           </div>
           <div className="mini-breed">{entry?.name}</div>
           <div className="mini-breed" style={{ color: RARITY_INFO[animal.rarity].color, fontWeight: 600 }}>

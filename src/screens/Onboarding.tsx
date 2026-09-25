@@ -2,15 +2,15 @@ import { useState } from 'react';
 import { startLocation } from '../game/location';
 import { useGame } from '../game/store';
 import { Logo } from '../ui/common';
-import { AvatarArt } from '../ui/icons';
+import { AvatarArt, GameIcon, IconBubble } from '../ui/icons';
 import { AVATARS, Rules } from '../ui/Rules';
 
 const HOW = [
-  { e: '🗺️', t: 'Esplora il mondo vero', d: 'Cammina per la tua città: ogni zona nuova ti dà punti.' },
-  { e: '📸', t: 'Fotografa cani e gatti', d: 'Quando ne incontri uno, inquadralo e scatta.' },
-  { e: '🤖', t: "L'AI lo riconosce", d: 'Capisce se è un cane o un gatto e ti propone la razza o il mantello.' },
-  { e: '🃏', t: 'Colleziona le carte', d: "Ogni animale diventa una carta: completa l'album delle razze!" },
-  { e: '💞', t: 'Fatti degli amici', d: 'Rivedi lo stesso animale in giorni diversi per aumentare la vostra amicizia.' },
+  { e: 'map', t: 'Esplora il mondo vero', d: 'Cammina per la tua città: ogni zona nuova ti dà punti.' },
+  { e: 'camera', t: 'Fotografa cani e gatti', d: 'Quando ne incontri uno, inquadralo e scatta.' },
+  { e: 'sparkles', t: "L'AI lo riconosce", d: 'Capisce se è un cane o un gatto e ti propone la razza o il mantello.' },
+  { e: 'layers', t: 'Colleziona le carte', d: "Ogni animale diventa una carta: completa l'album delle razze!" },
+  { e: 'heart', t: 'Fatti degli amici', d: 'Rivedi lo stesso animale in giorni diversi per aumentare la vostra amicizia.' },
 ];
 
 export function Onboarding() {
@@ -40,7 +40,7 @@ export function Onboarding() {
           <div className="how">
             {HOW.map((h) => (
               <div key={h.t}>
-                <span className="e">{h.e}</span>
+                <IconBubble name={h.e} size={46} />
                 <span>
                   <b>{h.t}</b>
                   <span>{h.d}</span>
@@ -58,7 +58,7 @@ export function Onboarding() {
           </p>
           <Rules />
           <button className="switch-row" onClick={() => setPromise((p) => !p)}>
-            <span style={{ fontSize: 26 }}>🤞</span>
+            <IconBubble name="hand" size={40} tone="mint" />
             <b className="grow">Prometto di rispettare le regole</b>
             <span className={`switch ${promise ? 'on' : ''}`} />
           </button>
@@ -83,7 +83,7 @@ export function Onboarding() {
             </div>
           </div>
           <p className="muted" style={{ fontSize: 14, marginTop: 16 }}>
-            📍 Al prossimo passo il telefono ti chiederà il permesso di usare la posizione: serve per la mappa e per registrare dove trovi gli
+            Al prossimo passo il telefono ti chiederà il permesso di usare la posizione: serve per la mappa e per registrare dove trovi gli
             animali (resta solo sul tuo telefono).
           </p>
         </div>
@@ -101,7 +101,7 @@ export function Onboarding() {
           </button>
         ) : (
           <button className="btn btn-primary btn-block" disabled={!name.trim()} onClick={start}>
-            🐾 Inizia a giocare
+            <GameIcon name="paw" /> Inizia a giocare
           </button>
         )}
         {step > 0 && (

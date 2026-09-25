@@ -83,7 +83,7 @@ export async function renderCardImage(animal: Animal): Promise<Blob> {
   // Testi.
   ctx.fillStyle = '#2a2440';
   ctx.font = '700 72px Fredoka, sans-serif';
-  ctx.fillText(`${SPECIES_NAME[animal.species].emoji} ${animal.name}`, 60, 910, W - 120);
+  ctx.fillText(animal.name, 60, 910, W - 120);
   ctx.font = '500 36px Fredoka, sans-serif';
   ctx.fillStyle = '#6f6a86';
   ctx.fillText(entry?.name ?? '', 60, 962, W - 120);
@@ -117,7 +117,7 @@ export async function renderCardImage(animal: Animal): Promise<Blob> {
 
   ctx.fillStyle = '#b3a99c';
   ctx.font = '500 30px Fredoka, sans-serif';
-  ctx.fillText('🐾 Zampe in Giro', 60, H - 58);
+  ctx.fillText(`Zampe in Giro · ${SPECIES_NAME[animal.species].one}`, 60, H - 58);
 
   return new Promise((resolve, reject) => c.toBlob((b) => (b ? resolve(b) : reject(new Error('png'))), 'image/png'));
 }

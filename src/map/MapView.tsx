@@ -11,6 +11,7 @@ import { photoUrl } from '../game/photos';
 import { useGame } from '../game/store';
 import { go } from '../router';
 import { avatarSvg } from '../ui/avatars';
+import { IconBubble } from '../ui/icons';
 
 // Il worker di MapLibre va impacchettato da Vite insieme alle sue dipendenze.
 maplibregl.setWorkerUrl(mapWorkerUrl);
@@ -103,16 +104,83 @@ function zonesGeoJSON(zones: string[]): GeoJSON.FeatureCollection {
 
 const EMPTY: GeoJSON.FeatureCollection = { type: 'FeatureCollection', features: [] };
 
+// ---- Stile "da gioco": toni pastello lilla e menta ------------------------
+// Si ricolorano i livelli della mappa in base al tipo e al nome; se un livello
+// non esiste o non accetta il colore, lo si lascia com'è.
+
+const PALETTE = {
+  land: '#f4effb',
+  residential: '#efe8f8',
+  park: '#d3f0dd',
+  wood: '#c4e8d0',
+  water: '#c3e2f6',
+  building: '#e3d9f3',
+  buildingTop: '#e9e1f7',
+  road: '#ffffff',
+  roadMajor: '#fdf8ff',
+  casing: '#d9cdef',
+  rail: '#cbbfe0',
+  label: '#5a5078',
+};
+
+function setPaint(map: maplibregl.Map, id: string, prop: string, value: string | number) {
+  try {
+    map.setPaintProperty(id, prop as Parameters<maplibregl.Map["setPaintProperty"]>[1], value);
+  } catch {
+    /* proprietà non supportata da questo livello */
+  }
+}
+
+function applyGameStyle(map: maplibregl.Map) {
+  for (const layer of map.getStyle().layers ?? []) {
+    const id = layer.id;
+    const name = id.toLowerCase();
+    switch (layer.type) {
+      case 'background':
+        setPaint(map, id, 'background-color', PALETTE.land);
+        break;
+      case 'fill':
+        if (/water|ocean|lake|river/.test(name)) setPaint(map, id, 'fill-color', PALETTE.water);
+        else if (/wood|forest/.test(name)) setPaint(map, id, 'fill-color', PALETTE.wood);
+        else if (/park|grass|garden|pitch|meadow|scrub|cemetery|golf|landcover/.test(name)) setPaint(map, id, 'fill-color', PALETTE.park);
+        else if (/building/.test(name)) setPaint(map, id, 'fill-color', PALETTE.building);
+        else if (/residential|landuse|suburb|neighbourhood/.test(name)) setPaint(map, id, 'fill-color', PALETTE.residential);
+        break;
+      case 'fill-extrusion':
+        setPaint(map, id, 'fill-extrusion-color', PALETTE.buildingTop);
+        setPaint(map, id, 'fill-extrusion-opacity', 0.85);
+        break;
+      case 'line':
+        if (/water|river|stream|canal/.test(name)) setPaint(map, id, 'line-color', PALETTE.water);
+        else if (/rail|transit/.test(name)) setPaint(map, id, 'line-color', PALETTE.rail);
+        else if (/casing|outline/.test(name)) setPaint(map, id, 'line-color', PALETTE.casing);
+        else if (/motorway|trunk|primary/.test(name)) setPaint(map, id, 'line-color', PALETTE.roadMajor);
+        else if (/road|street|highway|secondary|tertiary|minor|service|path|track|bridge|tunnel/.test(name)) setPaint(map, id, 'line-color', PALETTE.road);
+        break;
+      case 'symbol':
+        setPaint(map, id, 'text-color', PALETTE.label);
+        setPaint(map, id, 'text-halo-color', '#ffffff');
+        break;
+      case 'raster':
+        // Mappa di riserva (immagini): la si ammorbidisce verso il pastello.
+        setPaint(map, id, 'raster-saturation', -0.35);
+        setPaint(map, id, 'raster-brightness-min', 0.12);
+        setPaint(map, id, 'raster-hue-rotate', 12);
+        break;
+    }
+  }
+}
+
 function addGameLayers(map: maplibregl.Map) {
   if (map.getSource('zones')) return;
   map.addSource('zones', { type: 'geojson', data: EMPTY });
   map.addSource('accuracy', { type: 'geojson', data: EMPTY });
-  map.addLayer({ id: 'zones-fill', type: 'fill', source: 'zones', paint: { 'fill-color': '#15b3a2', 'fill-opacity': 0.13 } });
+  map.addLayer({ id: 'zones-fill', type: 'fill', source: 'zones', paint: { 'fill-color': '#9f7aea', 'fill-opacity': 0.12 } });
   map.addLayer({
     id: 'zones-line',
     type: 'line',
     source: 'zones',
-    paint: { 'line-color': '#15b3a2', 'line-opacity': 0.35, 'line-width': 1.5 },
+    paint: { 'line-color': '#9f7aea', 'line-opacity': 0.4, 'line-width': 1.5, 'line-dasharray': [2, 2] },
   });
   map.addLayer({ id: 'accuracy-fill', type: 'fill', source: 'accuracy', paint: { 'fill-color': '#15b3a2', 'fill-opacity': 0.12 } });
 }
@@ -125,7 +193,7 @@ function lastSeen(a: Animal): [number, number] {
 
 function animalMarkerEl(a: Animal): HTMLElement {
   const el = document.createElement('button');
-  el.className = 'animal-marker';
+  el.className = `animal-marker r-${a.rarity}`;
   el.setAttribute('aria-label', a.name);
   el.style.setProperty('--rarity', RARITY_INFO[a.rarity].color);
   const ring = document.createElement('div');
@@ -186,6 +254,7 @@ export function MapView() {
       if (!map.isStyleLoaded() && /style|Failed to fetch|NetworkError/i.test(String(e.error?.message ?? ''))) useFallback();
     });
     map.on('style.load', () => {
+      applyGameStyle(map);
       addGameLayers(map);
       setStyleReady((n) => n + 1);
     });
@@ -263,7 +332,9 @@ export function MapView() {
       {failed && (
         <div className="map-fallback">
           <div>
-            <div style={{ fontSize: 48 }}>🗺️</div>
+            <div style={{ marginBottom: 8 }}>
+              <IconBubble name="map" size={64} />
+            </div>
             La mappa non è disponibile su questo dispositivo, ma puoi comunque catturare animali!
           </div>
         </div>

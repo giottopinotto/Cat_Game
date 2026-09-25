@@ -66,18 +66,19 @@ export function missionText(m: Mission): string {
   }
 }
 
+/** Nome dell'icona (vedi ui/icons.tsx) di ogni tipo di sfida. */
 export function missionIcon(type: MissionType): string {
   const icons: Record<MissionType, string> = {
-    catch_any: '📸',
-    catch_cat: '🐱',
-    catch_dog: '🐶',
-    catch_rare: '💎',
-    catch_coat: '🎨',
-    walk: '👟',
-    explore: '🧭',
-    reencounter: '💞',
-    park: '🌳',
-    new_entry: '📖',
+    catch_any: 'camera',
+    catch_cat: 'cat',
+    catch_dog: 'dog',
+    catch_rare: 'gem',
+    catch_coat: 'palette',
+    walk: 'footprints',
+    explore: 'compass',
+    reencounter: 'heart',
+    park: 'trees',
+    new_entry: 'book',
   };
   return icons[type];
 }
