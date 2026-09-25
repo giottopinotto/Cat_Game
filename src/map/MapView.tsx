@@ -10,6 +10,7 @@ import { useLocation, type Fix } from '../game/location';
 import { photoUrl } from '../game/photos';
 import { useGame } from '../game/store';
 import { go } from '../router';
+import { avatarSvg } from '../ui/avatars';
 
 // Il worker di MapLibre va impacchettato da Vite insieme alle sue dipendenze.
 maplibregl.setWorkerUrl(mapWorkerUrl);
@@ -225,7 +226,7 @@ export function MapView() {
 
   useEffect(() => {
     const dot = playerRef.current?.el.querySelector('.dot');
-    if (dot) dot.textContent = avatar;
+    if (dot) dot.innerHTML = avatarSvg(avatar);
   }, [avatar, fix !== null]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Zone esplorate.

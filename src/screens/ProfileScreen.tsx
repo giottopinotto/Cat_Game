@@ -9,6 +9,7 @@ import { today, useGame } from '../game/store';
 import { badgeSummary, streaks } from '../game/summary';
 import { isIOS, isStandalone, promptInstall, useInstall } from '../pwa';
 import { formatNumber, Sheet, XpBar } from '../ui/common';
+import { AvatarArt, Medal } from '../ui/icons';
 import { AVATARS, Rules } from '../ui/Rules';
 import { downloadBlob } from '../ui/shareCard';
 
@@ -74,7 +75,7 @@ export function ProfileScreen() {
     <div className="screen">
       <div className="profile-head">
         <button className="avatar" onClick={() => setOpen('edit')} aria-label="Modifica profilo">
-          {player.avatar}
+          <AvatarArt id={player.avatar} />
           <span className="lvl">{lvl.level}</span>
         </button>
         <h1>{player.name || 'Esploratore'}</h1>
@@ -108,7 +109,7 @@ export function ProfileScreen() {
           const v = b.metric(summary);
           return (
             <button key={b.id} className={`badge t${tier}`} onClick={() => setOpen({ badge: b.id })}>
-              <div className="medal">{b.emoji}</div>
+              <Medal badgeId={b.id} tier={tier} />
               <div className="bn">{b.name}</div>
               <div className="bp">{tier === 3 ? 'Oro!' : b.goal ? b.goal(next) : `${Math.max(0, Math.floor(v))} / ${next}`}</div>
               {tier < 3 && !b.goal && <XpBar value={v} max={next} />}
@@ -255,10 +256,8 @@ function BadgeSheet({ id, value, onClose }: { id: string; value: BadgeSummary; o
   return (
     <Sheet onClose={onClose}>
       <div className="center">
-        <div className={`badge t${tier}`} style={{ boxShadow: 'none', background: 'none' }}>
-          <div className="medal" style={{ width: 84, height: 84, fontSize: 42 }}>
-            {b.emoji}
-          </div>
+        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 8 }}>
+          <Medal badgeId={b.id} tier={tier} size={88} />
         </div>
         <h2>{b.name}</h2>
         <p className="muted">{tier ? `Medaglia ${TIER_NAMES[tier - 1].toLowerCase()}` : 'Non ancora ottenuta'}</p>
@@ -297,7 +296,7 @@ function EditProfile({ onClose }: { onClose: () => void }) {
         <div className="avatars">
           {AVATARS.map((a) => (
             <button key={a} className={avatar === a ? 'active' : ''} onClick={() => setAvatar(a)}>
-              {a}
+              <AvatarArt id={a} />
             </button>
           ))}
         </div>

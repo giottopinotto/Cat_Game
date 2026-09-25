@@ -100,6 +100,28 @@ export function detectAnimals(detector: ObjectDetector, source: Source): Detecti
     .sort((a, b) => b.score - a.score);
 }
 
+/**
+ * Copia rimpicciolita dell'immagine (lato lungo = maxSide): il rilevatore lavora
+ * comunque a bassa risoluzione, e ridurre prima è molto più veloce sul telefono.
+ */
+export function downscale(source: HTMLVideoElement | HTMLCanvasElement, maxSide: number, reuse?: HTMLCanvasElement) {
+  const w = source instanceof HTMLVideoElement ? source.videoWidth : source.width;
+  const h = source instanceof HTMLVideoElement ? source.videoHeight : source.height;
+  const scale = Math.min(1, maxSide / Math.max(w, h));
+  const c = reuse ?? document.createElement('canvas');
+  const cw = Math.max(1, Math.round(w * scale));
+  const ch = Math.max(1, Math.round(h * scale));
+  if (c.width !== cw) c.width = cw;
+  if (c.height !== ch) c.height = ch;
+  c.getContext('2d')!.drawImage(source, 0, 0, cw, ch);
+  return { canvas: c, scale };
+}
+
+/** Riporta i riquadri trovati sull'immagine piccola alle coordinate di quella originale. */
+export function scaleDetections(dets: Detection[], scale: number): Detection[] {
+  return dets.map((d) => ({ ...d, box: { x: d.box.x / scale, y: d.box.y / scale, w: d.box.w / scale, h: d.box.h / scale } }));
+}
+
 /** Sceglie l'animale "protagonista": sicuro, grande e vicino al centro. */
 export function pickMain(dets: Detection[], width: number, height: number): Detection | null {
   let best: Detection | null = null;

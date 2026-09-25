@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { startLocation } from '../game/location';
 import { useGame } from '../game/store';
 import { Logo } from '../ui/common';
+import { AvatarArt } from '../ui/icons';
 import { AVATARS, Rules } from '../ui/Rules';
 
 const HOW = [
@@ -76,7 +77,7 @@ export function Onboarding() {
             <div className="avatars">
               {AVATARS.map((a) => (
                 <button key={a} className={avatar === a ? 'active' : ''} onClick={() => setAvatar(a)}>
-                  {a}
+                  <AvatarArt id={a} />
                 </button>
               ))}
             </div>

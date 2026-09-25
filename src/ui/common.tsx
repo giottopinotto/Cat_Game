@@ -1,4 +1,5 @@
 import { useEffect, type CSSProperties, type ReactNode } from 'react';
+import { createPortal } from 'react-dom';
 import { RARITY_INFO, type Rarity, type Species } from '../data/types';
 
 export function rarityStyle(r: Rarity): CSSProperties {
@@ -44,14 +45,16 @@ export function Sheet({ onClose, children }: { onClose: () => void; children: Re
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, [onClose]);
-  return (
+  // Il pannello viene disegnato direttamente nella pagina, sopra tutto (anche la barra in basso).
+  return createPortal(
     <>
       <div className="sheet-backdrop" onClick={onClose} />
       <div className="sheet" role="dialog" aria-modal="true">
         <div className="sheet-grip" />
         {children}
       </div>
-    </>
+    </>,
+    document.body,
   );
 }
 

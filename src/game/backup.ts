@@ -1,6 +1,7 @@
 import { getEntry } from '../data/entries';
 import { RARITIES, type Animal, type Encounter, type Rarity, type Stats } from '../data/types';
 import { getAllPhotos, loadAnimals, kvGet, replaceAll, type PhotoRecord } from './db';
+import { AVATAR_IDS } from '../ui/avatars';
 import { forgetPhotos } from './photos';
 import { normalizePlayer, type PlayerData } from './store';
 
@@ -104,7 +105,7 @@ function cleanPlayer(p: unknown): PlayerData {
   return {
     ...base,
     name: text(x.name, 'Esploratore').trim() || 'Esploratore',
-    avatar: text(x.avatar, base.avatar).slice(0, 8) || base.avatar,
+    avatar: AVATAR_IDS.includes(x.avatar as string) ? (x.avatar as string) : base.avatar,
     xp: clamp(x.xp, 0, 1e9, 0),
     createdAt: clamp(x.createdAt, 0, Date.now() + 86400000, base.createdAt),
     onboarded: true,

@@ -1,6 +1,7 @@
 import { useGame } from '../game/store';
 import { TIER_NAMES, tierText } from '../game/badges';
 import { levelTitle } from '../game/progress';
+import { Medal } from './icons';
 
 export function Toasts() {
   const toasts = useGame((s) => s.toasts);
@@ -39,7 +40,9 @@ export function Celebrations() {
           </>
         ) : (
           <>
-            <div className="big">{c.badge.emoji}</div>
+            <div className="big" style={{ display: 'flex', justifyContent: 'center' }}>
+              <Medal badgeId={c.badge.id} tier={c.tier} size={96} />
+            </div>
             <h2>Medaglia {TIER_NAMES[c.tier - 1].toLowerCase()}!</h2>
             <p>
               <b>{c.badge.name}</b>: {tierText(c.badge, c.tier - 1)}.

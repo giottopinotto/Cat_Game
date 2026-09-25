@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { DEFAULT_AVATAR } from '../ui/avatars';
 import { getEntry } from '../data/entries';
 import { RARITIES, RARITY_INFO, rarityIndex, type Animal, type Encounter, type Rarity, type Species } from '../data/types';
 import { BADGES, badgeTier, TIER_NAMES, TIER_XP, type BadgeDef } from './badges';
@@ -120,7 +121,7 @@ export function defaultPlayer(): PlayerData {
   const day = today();
   return {
     name: '',
-    avatar: '🧢',
+    avatar: DEFAULT_AVATAR,
     xp: 0,
     createdAt: Date.now(),
     onboarded: false,

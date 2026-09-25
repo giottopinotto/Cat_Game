@@ -8,7 +8,7 @@ import { mapApi } from '../map/MapView';
 import { back } from '../router';
 import { vibrate } from '../ui/common';
 import { analyzePhoto, type Analysis } from '../vision/analyze';
-import { detectAnimals, loadDetector, loadVision, pickMain, type Box } from '../vision/engine';
+import { detectAnimals, downscale, loadDetector, loadVision, pickMain, scaleDetections, type Box } from '../vision/engine';
 import { grabFrame, makePhotos } from '../vision/photo';
 import { ConfirmPanel } from './ConfirmPanel';
 import { Reveal } from './Reveal';
@@ -24,8 +24,8 @@ export interface Shot {
 
 type Phase =
   | { k: 'live' }
-  | { k: 'analyzing'; frozen: string }
-  | { k: 'notfound'; frozen: string }
+  | { k: 'analyzing' }
+  | { k: 'notfound' }
   | { k: 'confirm'; shot: Shot }
   | { k: 'reveal'; outcome: CaptureOutcome; cardUrl: string };
 
@@ -83,7 +83,7 @@ export function CaptureScreen() {
       setCamera('starting');
       try {
         const stream = await navigator.mediaDevices.getUserMedia({
-          video: { facingMode: { ideal: 'environment' }, width: { ideal: 1920 }, height: { ideal: 1440 } },
+          video: { facingMode: { ideal: 'environment' }, width: { ideal: 1600 }, height: { ideal: 1200 } },
           audio: false,
         });
         if (cancelled) {
@@ -115,14 +115,17 @@ export function CaptureScreen() {
     let last = 0;
     let alive = true;
     let announced = false;
+    // Il mirino lavora su una copia piccola del fotogramma: leggero e fluido anche sui telefoni meno potenti.
+    const small = document.createElement('canvas');
     void loadDetector().then((detector) => {
       const loop = (t: number) => {
         if (!alive) return;
         const v = videoRef.current;
-        if (v && v.readyState >= 2 && t - last > 220) {
+        if (v && v.readyState >= 2 && t - last > 300) {
           last = t;
           try {
-            const main = pickMain(detectAnimals(detector, v), v.videoWidth, v.videoHeight);
+            const { canvas, scale } = downscale(v, 320, small);
+            const main = pickMain(scaleDetections(detectAnimals(detector, canvas), scale), v.videoWidth, v.videoHeight);
             if (main) {
               if (!announced) vibrate(15);
               announced = true;
@@ -150,16 +153,19 @@ export function CaptureScreen() {
     const v = videoRef.current;
     const fixNow = useLocation.getState().fix;
     if (!v || !v.videoWidth || !canShoot || !captureFixOk(fixNow) || tooFast(fixNow)) return;
+    // Lo scatto è istantaneo: si copia il fotogramma, si ferma l'immagine e solo
+    // dopo che lo schermo ha mostrato il flash parte l'analisi (che richiede tempo).
     vibrate(30);
-    setFlash((n) => n + 1);
     const frame = grabFrame(v);
-    const frozen = frame.toDataURL('image/jpeg', 0.75);
-    setPhase({ k: 'analyzing', frozen });
+    v.pause();
+    setFlash((n) => n + 1);
+    setPhase({ k: 'analyzing' });
+    await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
     try {
       const analysis = await analyzePhoto(frame);
       if (!analysis) {
         vibrate([40, 60, 40]);
-        setPhase({ k: 'notfound', frozen });
+        setPhase({ k: 'notfound' });
         return;
       }
       const photos = await makePhotos(frame, analysis.box);
@@ -167,12 +173,13 @@ export function CaptureScreen() {
       setPhase({ k: 'confirm', shot: { analysis, ...photos, fix: fixNow, park } });
     } catch (e) {
       console.error(e);
-      setPhase({ k: 'notfound', frozen });
+      setPhase({ k: 'notfound' });
     }
   }
 
   function again() {
     setDet(null);
+    void videoRef.current?.play().catch(() => {});
     setPhase({ k: 'live' });
   }
 
@@ -185,8 +192,7 @@ export function CaptureScreen() {
 
   return (
     <div className="capture">
-      <video ref={videoRef} playsInline muted autoPlay style={{ visibility: phase.k === 'live' ? 'visible' : 'hidden' }} />
-      {(phase.k === 'analyzing' || phase.k === 'notfound') && <img className="frozen" src={phase.frozen} alt="" />}
+      <video ref={videoRef} playsInline muted autoPlay style={{ visibility: wantCamera ? 'visible' : 'hidden' }} />
 
       {phase.k === 'live' && camera === 'ready' && (
         <div

@@ -1,4 +1,4 @@
-export const AVATARS = ['🧢', '👧', '👦', '👩', '👨', '🧑', '👵', '👴', '🧒', '🦸', '🧙', '🥷', '🐾', '🦊', '🐻', '🐼', '🐸', '🦄'];
+export { AVATAR_IDS as AVATARS } from './avatars';
 
 export const RULES = [
   { e: '🐾', t: 'Non disturbare gli animali', d: 'Non inseguirli, non spaventarli e non dar loro da mangiare. La foto va benissimo anche da lontano.' },

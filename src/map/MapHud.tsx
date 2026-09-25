@@ -8,6 +8,7 @@ import { dayKey, levelInfo } from '../game/progress';
 import { useGame } from '../game/store';
 import { go } from '../router';
 import { XpBar } from '../ui/common';
+import { AvatarArt } from '../ui/icons';
 import { MissionsSheet } from './MissionsSheet';
 import { recenter, useFollow } from './MapView';
 
@@ -44,7 +45,7 @@ export function MapHud() {
       <div className="hud-top">
         <button className="player-chip" onClick={() => go('profilo')}>
           <div className="avatar">
-            {player.avatar}
+            <AvatarArt id={player.avatar} />
             <span className="lvl">{lvl.level}</span>
           </div>
           <div className="grow" style={{ textAlign: 'left' }}>

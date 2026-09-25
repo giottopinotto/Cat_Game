@@ -2,7 +2,7 @@ import { euCoatEntryId } from '../data/cats';
 import { getEntry, LABEL_TO_ENTRY } from '../data/entries';
 import type { CoatId, Rarity, Species } from '../data/types';
 import { coatFromCanvas, type CoatColors } from './coat';
-import { classify, cropCanvas, detectAnimals, loadClassifier, loadDetector, pickMain, type Box } from './engine';
+import { classify, cropCanvas, detectAnimals, downscale, loadClassifier, loadDetector, pickMain, scaleDetections, type Box } from './engine';
 import { CAT_LABELS, DOG_LABELS, WILD_DOG_LABELS } from './labels';
 
 export interface Suggestion {
@@ -90,7 +90,8 @@ function catSuggestions(scores: Map<string, number>, coat: CoatId) {
  */
 export async function analyzePhoto(photo: HTMLCanvasElement): Promise<Analysis | null> {
   const [detector, classifier] = await Promise.all([loadDetector(), loadClassifier()]);
-  const main = pickMain(detectAnimals(detector, photo), photo.width, photo.height);
+  const small = downscale(photo, 640);
+  const main = pickMain(scaleDetections(detectAnimals(detector, small.canvas), small.scale), photo.width, photo.height);
 
   let box: Box;
   let crop: HTMLCanvasElement;
