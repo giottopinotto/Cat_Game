@@ -11,7 +11,7 @@ import { vibrate } from '../ui/common';
 import { GameIcon, IconBubble } from '../ui/icons';
 import { play } from '../ui/sound';
 import { analyzePhoto, type Analysis } from '../vision/analyze';
-import { detectAnimals, downscale, loadDetector, loadVision, pickMain, scaleDetections, type Box } from '../vision/engine';
+import { detectAnimals, downscale, loadDetector, loadVisionStaged, pickMain, scaleDetections, type Box } from '../vision/engine';
 import { BLURRY, grabFrame, makePhotos, sharpness } from '../vision/photo';
 import { ConfirmPanel } from './ConfirmPanel';
 import { Reveal } from './Reveal';
@@ -91,10 +91,8 @@ export function CaptureScreen() {
   // Modelli AI (la prima volta vengono scaricati, poi restano in cache).
   const loadModels = useCallback(() => {
     setModels('loading');
-    loadVision().then(
-      () => setModels('ready'),
-      () => setModels('error'),
-    );
+    // Si può inquadrare appena è pronto il rilevatore; il resto si prepara dietro le quinte.
+    loadVisionStaged(() => setModels('ready')).catch(() => setModels((m) => (m === 'ready' ? m : 'error')));
   }, []);
   useEffect(loadModels, [loadModels]);
 

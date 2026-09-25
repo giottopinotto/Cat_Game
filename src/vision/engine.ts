@@ -116,6 +116,39 @@ export async function loadVision(): Promise<void> {
   await Promise.all([loadDetector(), loadClassifier(), loadSegmenter()]);
 }
 
+/**
+ * Prima il rilevatore (serve per inquadrare), poi gli altri due modelli uno alla volta:
+ * così la fotocamera è pronta prima e il telefono non si blocca.
+ */
+export async function loadVisionStaged(onDetector: () => void): Promise<void> {
+  await loadDetector();
+  onDetector();
+  await loadClassifier();
+  await loadSegmenter();
+}
+
+/**
+ * Scarica in anticipo i file della AI senza prepararla: è solo traffico di rete
+ * (a bassa priorità), il telefono non lavora. Alla prima cattura non c'è niente da scaricare.
+ */
+export async function prefetchVision(): Promise<void> {
+  const files = [
+    'mediapipe/wasm/vision_wasm_internal.js',
+    'mediapipe/wasm/vision_wasm_internal.wasm',
+    'models/efficientdet_lite0.tflite',
+    visionConfig.classifierModel,
+    'models/deeplab_v3.tflite',
+  ];
+  for (const f of files) {
+    try {
+      const res = await fetch(asset(f), { priority: 'low' } as RequestInit);
+      await res.arrayBuffer();
+    } catch {
+      return; // senza rete si riproverà alla prossima apertura
+    }
+  }
+}
+
 // MediaPipe in modalità VIDEO vuole timestamp sempre crescenti.
 let lastTs = 0;
 function nextTs(): number {

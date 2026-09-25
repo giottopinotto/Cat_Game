@@ -42,7 +42,7 @@ const FALLBACK_STYLE: StyleSpecification = {
 
 const ITALY: [number, number] = [12.5, 42.3];
 const PLAY_ZOOM = 17;
-const PLAY_PITCH = 55;
+const PLAY_PITCH = 45;
 
 /** La mappa segue il giocatore finché non la si sposta col dito. */
 export const useFollow = create<{ on: boolean }>(() => ({ on: true }));
@@ -212,8 +212,12 @@ function applyGameStyle(map: maplibregl.Map, dark: boolean, accentId: string) {
         else if (/residential|landuse|suburb|neighbourhood/.test(name)) setPaint(map, id, 'fill-color', PALETTE.residential);
         break;
       case 'fill-extrusion':
-        setPaint(map, id, 'fill-extrusion-color', PALETTE.buildingTop);
-        setPaint(map, id, 'fill-extrusion-opacity', 0.85);
+        // Edifici in 3D spenti: sono la parte più pesante da disegnare (si vedono comunque piatti).
+        try {
+          map.setLayoutProperty(id, 'visibility', 'none');
+        } catch {
+          /* livello già rimosso */
+        }
         break;
       case 'line':
         if (/water|river|stream|canal/.test(name)) setPaint(map, id, 'line-color', PALETTE.water);
@@ -331,7 +335,10 @@ export function MapView() {
         center: ITALY,
         zoom: 5,
         attributionControl: { compact: true },
-        maxPitch: 70,
+        maxPitch: 60,
+        // Sugli schermi molto fitti (3x) basta disegnare a 2x: la mappa è molto più leggera.
+        pixelRatio: Math.min(2, window.devicePixelRatio || 1),
+        fadeDuration: 0,
       });
     } catch {
       setFailed(true);

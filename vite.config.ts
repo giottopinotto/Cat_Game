@@ -101,5 +101,16 @@ export default defineConfig({
   },
   build: {
     chunkSizeWarningLimit: 1500,
+    rollupOptions: {
+      output: {
+        // La mappa e React in file a parte: cambiano di rado, così dopo un aggiornamento
+        // dell'app il telefono non deve riscaricarli.
+        manualChunks(id: string) {
+          if (id.includes('node_modules/maplibre-gl')) return 'maplibre';
+          if (/node_modules\/(react|react-dom|scheduler|zustand)\//.test(id)) return 'react';
+          return undefined;
+        },
+      },
+    },
   },
 });

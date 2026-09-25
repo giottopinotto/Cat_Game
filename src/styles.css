@@ -280,8 +280,6 @@ p {
   grid-template-columns: 1fr 1fr 96px 1fr 1fr;
   align-items: center;
   background: var(--glass);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
   border-top: 1px solid var(--line);
   box-shadow: 0 -6px 24px var(--shadow-c);
 }
@@ -2546,16 +2544,6 @@ p {
   box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.7), 0 0 14px 4px var(--rarity);
 }
 
-.animal-marker.r-epico .ring,
-.animal-marker.r-leggendario .ring {
-  animation: marker-glow 2.2s ease-in-out infinite;
-}
-
-@keyframes marker-glow {
-  50% {
-    box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.9), 0 0 22px 8px var(--rarity);
-  }
-}
 
 .map-wrap {
   background: var(--map-bg);
@@ -4208,4 +4196,24 @@ textarea.input {
     transform: translateY(-7px);
     opacity: 0.4;
   }
+}
+
+/* ---------- Leggerezza ----------
+   Le cornici animate si muovono solo nel profilo e nei festeggiamenti: nella barra sopra
+   la mappa e negli elenchi restano ferme (tante animazioni insieme rallentano il telefono). */
+.player-chip .avatar,
+.player-chip .avatar::before,
+.player-chip .avatar::after,
+.cosmetic-grid .avatar,
+.cosmetic-grid .avatar::before,
+.cosmetic-grid .avatar::after,
+.reward-step .avatar,
+.reward-step .avatar::before,
+.reward-step .avatar::after,
+.cosmetic-grid .banner-swatch,
+.reward-step .banner-swatch,
+.next-reward .avatar,
+.next-reward .avatar::before,
+.next-reward .avatar::after {
+  animation: none !important;
 }

@@ -3,15 +3,15 @@ import { releaseLocation, startLocation } from './game/location';
 import { useGame } from './game/store';
 import { MapHud } from './map/MapHud';
 import { MapView } from './map/MapView';
-import { useRoute } from './router';
 import { AlbumScreen } from './screens/AlbumScreen';
 import { AnimalScreen } from './screens/AnimalScreen';
 import { CollectionScreen } from './screens/CollectionScreen';
 import { DiaryScreen } from './screens/DiaryScreen';
-import { RewardsScreen } from './screens/RewardsScreen';
 import { FriendLink, FriendsScreen } from './screens/FriendsScreen';
 import { Onboarding } from './screens/Onboarding';
 import { ProfileScreen } from './screens/ProfileScreen';
+import { RewardsScreen } from './screens/RewardsScreen';
+import { useRoute } from './router';
 import { BottomNav } from './ui/BottomNav';
 import { Splash } from './ui/Splash';
 import { Celebrations, Toasts } from './ui/Overlays';
@@ -51,10 +51,11 @@ export function App() {
 
   useEffect(() => {
     if (!ready || !onboarded) return;
-    // Prepara la AI in anticipo, così la prima cattura è immediata (salvo risparmio dati).
+    // Scarica in anticipo i file della AI (solo rete, niente lavoro per il telefono):
+    // la si prepara davvero quando si apre la fotocamera. Niente se c'è il risparmio dati.
     const saveData = (navigator as { connection?: { saveData?: boolean } }).connection?.saveData;
     if (saveData) return;
-    const t = setTimeout(() => void import('./vision/engine').then((m) => m.loadVision()).catch(() => {}), 5000);
+    const t = setTimeout(() => void import('./vision/engine').then((m) => m.prefetchVision()).catch(() => {}), 8000);
     return () => clearTimeout(t);
   }, [ready, onboarded]);
 
@@ -82,7 +83,9 @@ export function App() {
           <CaptureScreen />
         </Suspense>
       )}
-      {(TABS.includes(route) || route === 'diario' || route === 'amici' || route === 'premi') && <BottomNav active={tab} dots={albumNew && route !== 'album' ? ['album'] : []} />}
+      {(TABS.includes(route) || route === 'diario' || route === 'amici' || route === 'premi') && (
+        <BottomNav active={tab} dots={albumNew && route !== 'album' ? ['album'] : []} />
+      )}
       <Toasts />
       {route !== 'cattura' && <Celebrations />}
     </>
