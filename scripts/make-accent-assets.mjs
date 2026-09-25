@@ -10,14 +10,25 @@ const src = readFileSync(join(root, 'src/ui/accents.ts'), 'utf8');
 const accents = [...src.matchAll(/\{ id: '([a-z]+)', name: '[^']+', h: (\d+), s: (\d+), l: (\d+) \}/g)].map((m) => ({
   id: m[1],
   h: +m[2],
+  s: +m[3],
+  l: +m[4],
 }));
 if (accents.length < 2) throw new Error('Colori non trovati in accents.ts');
 
 const hsl = (h, s, l) => `hsl(${h}, ${s}%, ${l}%)`;
+/** Stesso colore in esadecimale (alcuni telefoni leggono solo questo formato nel manifest). */
+function hex(h, s, l) {
+  s /= 100;
+  l /= 100;
+  const k = (n) => (n + h / 30) % 12;
+  const a = s * Math.min(l, 1 - l);
+  const f = (n) => Math.round(255 * (l - a * Math.max(-1, Math.min(k(n) - 3, 9 - k(n), 1))));
+  return '#' + [f(0), f(8), f(4)].map((v) => v.toString(16).padStart(2, '0')).join('');
+}
 const colorsOf = (a) =>
   a.id === 'lilla'
     ? { top: '#c9b0fb', bottom: '#8b63e0', theme: '#9f7aea', bg: '#f8f4ff' }
-    : { top: hsl(a.h, 90, 84), bottom: hsl(a.h, 67, 63), theme: hsl(a.h, 70, 62), bg: hsl(a.h, 100, 98) };
+    : { top: hsl(a.h, 90, 84), bottom: hsl(a.h, 67, 63), theme: hex(a.h, a.s, a.l), bg: hex(a.h, 78, 74) };
 
 const favicon = readFileSync(join(root, 'public/favicon.svg'), 'utf8');
 const paw = favicon.replace(/<rect[^>]*\/>/, '').replace(/<defs>.*<\/defs>/, '');

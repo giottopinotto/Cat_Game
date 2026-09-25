@@ -60,12 +60,16 @@ function applyIcons(accentId: string) {
 /** Applica tema, suoni e vibrazione scelti nelle impostazioni. */
 export function useAppearance(): void {
   const settings = useGame((s) => s.player.settings);
+  const ready = useGame((s) => s.ready);
   useEffect(() => {
+    // Finché le impostazioni non sono caricate si lascia il colore messo da boot.js
+    // (altrimenti per un attimo si vedrebbe il lilla predefinito).
+    if (!ready) return;
     setFeedbackPrefs(settings);
     apply(settings.theme, settings.accent);
     document.documentElement.classList.toggle('no-fx', !settings.fx);
     if (settings.theme !== 'auto') return;
     const t = setInterval(() => apply(settings.theme, settings.accent), 60000);
     return () => clearInterval(t);
-  }, [settings]);
+  }, [settings, ready]);
 }

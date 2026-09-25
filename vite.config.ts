@@ -53,7 +53,8 @@ export default defineConfig({
         description: 'Cattura con la fotocamera i cani e i gatti veri che incontri per strada!',
         lang: 'it',
         theme_color: '#9f7aea',
-        background_color: '#f8f4ff',
+        // Uguale alla schermata di apertura (vedi .splash), così il passaggio non si nota.
+        background_color: '#ab8cf2',
         display: 'standalone',
         orientation: 'portrait',
         start_url: '.',
