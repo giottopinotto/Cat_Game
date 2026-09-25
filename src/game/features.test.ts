@@ -115,7 +115,11 @@ describe('backup con i nuovi dati', () => {
           photos: [],
           player: {
             home: { lat: 45, lng: 9, r: 99999 },
-            settings: { sound: 'forte', theme: 'viola', vibration: false },
+            settings: { sound: 'forte', theme: 'viola', vibration: false, accent: 'javascript:alert(1)' },
+            frame: 'corona',
+            banner: 'inventato',
+            xp: 10,
+            albumSeen: ['cat-eu-nero', '<b>x</b>', 42],
             dailyWalk: { '2026-09-01': 1200, 'hack<script>': 5, '2026-09-02': 1e12 },
             friends: [{ id: 'f1', entryId: 'dog-labrador', from: 'Luca' }],
           },
@@ -127,8 +131,36 @@ describe('backup con i nuovi dati', () => {
     await useGame.getState().init();
     const p = useGame.getState().player;
     expect(p.home).toBeNull();
-    expect(p.settings).toEqual({ sound: true, vibration: false, theme: 'auto', shareKm: true, shareNames: true, gpsOnlyPhoto: true });
+    expect(p.settings).toEqual({ sound: true, vibration: false, theme: 'auto', shareKm: true, shareNames: true, gpsOnlyPhoto: true, accent: 'lilla', fx: true });
     expect(p.dailyWalk).toEqual({ '2026-09-01': 1200, '2026-09-02': 1e6 });
     expect(p.friends).toHaveLength(0);
+    // Cornice non ancora sbloccata a quel livello e sfondo inesistente: si torna a quelli di base.
+    expect(p.frame).toBe('base');
+    expect(p.banner).toBe('nessuno');
+    expect(p.albumSeen).toEqual(['cat-eu-nero']);
+  });
+});
+
+describe('grafica: colori e cornici', () => {
+  it('colori e cornici accettano solo valori conosciuti e sbloccati', async () => {
+    const { ACCENT_IDS, getAccent } = await import('../ui/accents');
+    const { pickCosmetic, FRAMES, BANNERS, unlockedAt } = await import('../ui/cosmetics');
+    expect(ACCENT_IDS).toContain('lilla');
+    expect(getAccent('non-esiste').id).toBe('lilla');
+    expect(pickCosmetic(FRAMES, 'corona', 39)).toBe('base');
+    expect(pickCosmetic(FRAMES, 'corona', 40)).toBe('corona');
+    expect(pickCosmetic(BANNERS, '__proto__', 50)).toBe('nessuno');
+    expect(unlockedAt(5).map((u) => u.item.id)).toEqual(['stelle']);
+  });
+
+  it('lo store non permette cornici bloccate', async () => {
+    await new Promise((r) => setTimeout(r, 20));
+    await wipeAll();
+    await useGame.getState().init();
+    useGame.getState().finishOnboarding('Test', 'gatto-rosso');
+    useGame.getState().updateProfile('Test', 'gatto-rosso', 'galassia', 'prato');
+    expect(useGame.getState().player.frame).toBe('base');
+    // Livello 1: il prato si sblocca al livello 2.
+    expect(useGame.getState().player.banner).toBe('nessuno');
   });
 });

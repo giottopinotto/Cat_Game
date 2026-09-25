@@ -8,8 +8,9 @@ import { AnimalCard } from '../ui/AnimalCard';
 import { formatNumber, Logo, rarityStyle, vibrate, XpBar } from '../ui/common';
 import { GameIcon, Hearts, IconBubble } from '../ui/icons';
 import { play } from '../ui/sound';
+import { Fireworks } from '../ui/Fireworks';
 
-const CONFETTI = ['#9f7aea', '#15b3a2', '#ffd24a', '#a855f7', '#3b82f6', '#ff5d8f'];
+const CONFETTI = ['var(--primary)', '#15b3a2', '#ffd24a', '#a855f7', '#3b82f6', '#ff5d8f'];
 
 function Burst({ count }: { count: number }) {
   const pieces = useMemo(
@@ -90,6 +91,7 @@ export function Reveal({ outcome, cardUrl, onAgain }: { outcome: CaptureOutcome;
   return (
     <div className="reveal" style={rarityStyle(animal.rarity)}>
       <Burst count={isNew ? 24 + r * 12 : 18} />
+      {isNew && r >= 3 && <Fireworks bursts={r === 4 ? 7 : 4} front />}
       <h1 className="reveal-title">{title}</h1>
       <p className="reveal-sub">{sub}</p>
 

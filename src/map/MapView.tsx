@@ -13,6 +13,9 @@ import { go } from '../router';
 import { avatarSvg } from '../ui/avatars';
 import { IconBubble } from '../ui/icons';
 import { useTheme } from '../ui/theme';
+import { Ambient } from './Ambient';
+import { dayPhase, skyColors } from './ambient';
+import { accentColor, DEFAULT_ACCENT, getAccent, hsl } from '../ui/accents';
 
 // Il worker di MapLibre va impacchettato da Vite insieme alle sue dipendenze.
 maplibregl.setWorkerUrl(mapWorkerUrl);
@@ -158,8 +161,44 @@ function setPaint(map: maplibregl.Map, id: string, prop: string, value: string |
   }
 }
 
-function applyGameStyle(map: maplibregl.Map, dark: boolean) {
-  const PALETTE = dark ? NIGHT : DAY;
+/** Tavolozza della mappa nel colore scelto (il lilla usa quella disegnata a mano). */
+function paletteFor(accentId: string, dark: boolean): Palette {
+  if (accentId === DEFAULT_ACCENT) return dark ? NIGHT : DAY;
+  const { h } = getAccent(accentId);
+  if (dark) {
+    return {
+      ...NIGHT,
+      land: hsl(h, 33, 15),
+      residential: hsl(h, 32, 17),
+      building: hsl(h, 30, 22),
+      buildingTop: hsl(h, 31, 25),
+      road: hsl(h, 28, 34),
+      roadMajor: hsl(h, 27, 42),
+      casing: hsl(h, 33, 20),
+      rail: hsl(h, 29, 29),
+      label: hsl(h, 60, 85),
+      halo: hsl(h, 33, 15),
+    };
+  }
+  return {
+    ...DAY,
+    land: hsl(h, 60, 96),
+    residential: hsl(h, 48, 94),
+    building: hsl(h, 45, 90),
+    buildingTop: hsl(h, 50, 92),
+    roadMajor: hsl(h, 100, 99),
+    casing: hsl(h, 50, 87),
+    rail: hsl(h, 30, 81),
+    label: hsl(h, 20, 38),
+  };
+}
+
+function applyGameStyle(map: maplibregl.Map, dark: boolean, accentId: string) {
+  const PALETTE = paletteFor(accentId, dark);
+  const accent = accentColor(accentId);
+  for (const id of ['zones-fill', 'zones-line']) {
+    if (map.getLayer(id)) setPaint(map, id, id === 'zones-fill' ? 'fill-color' : 'line-color', accent);
+  }
   for (const layer of map.getStyle().layers ?? []) {
     const id = layer.id;
     const name = id.toLowerCase();
@@ -269,7 +308,7 @@ function animalMarkerEl(a: Animal): HTMLElement {
   return el;
 }
 
-export function MapView() {
+export function MapView({ active = true }: { active?: boolean }) {
   const container = useRef<HTMLDivElement>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
   const playerRef = useRef<{ marker: maplibregl.Marker; el: HTMLElement } | null>(null);
@@ -317,8 +356,8 @@ export function MapView() {
     map.on('style.load', () => {
       mapApi.ready = true;
       clearTimeout(timer);
-      applyGameStyle(map, useTheme.getState().dark);
       addGameLayers(map);
+      applyGameStyle(map, useTheme.getState().dark, useTheme.getState().accent);
       setStyleReady((n) => n + 1);
     });
     // Se il giocatore sposta la mappa col dito smettiamo di seguirlo.
@@ -383,10 +422,28 @@ export function MapView() {
 
   // Giorno e notte.
   const dark = useTheme((s) => s.dark);
+  const accent = useTheme((s) => s.accent);
   useEffect(() => {
     const map = mapRef.current;
-    if (map && mapApi.ready) applyGameStyle(map, dark);
-  }, [dark, styleReady]);
+    if (map && mapApi.ready) applyGameStyle(map, dark, accent);
+  }, [dark, accent, styleReady]);
+
+  // Cielo (si vede inclinando la mappa): cambia con l'ora del giorno.
+  const [skyPhase, setSkyPhase] = useState(dayPhase());
+  useEffect(() => {
+    const t = setInterval(() => setSkyPhase(dayPhase()), 60000);
+    return () => clearInterval(t);
+  }, []);
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !mapApi.ready) return;
+    const c = skyColors(dark && skyPhase === 'day' ? 'night' : skyPhase, getAccent(accent).h);
+    try {
+      map.setSky({ 'sky-color': c.top, 'horizon-color': c.horizon, 'fog-color': c.fog, 'sky-horizon-blend': 0.6, 'horizon-fog-blend': 0.7, 'fog-ground-blend': 0.4 });
+    } catch {
+      /* cielo non supportato */
+    }
+  }, [dark, accent, skyPhase, styleReady]);
 
   // Zone esplorate.
   useEffect(() => {
@@ -430,6 +487,7 @@ export function MapView() {
   return (
     <div className="map-wrap">
       <div ref={container} style={{ position: 'absolute', inset: 0 }} />
+      <Ambient active={active} />
       {failed && (
         <div className="map-fallback">
           <div>

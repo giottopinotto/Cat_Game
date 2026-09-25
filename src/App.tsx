@@ -25,6 +25,11 @@ export function App() {
   const ready = useGame((s) => s.ready);
   const onboarded = useGame((s) => s.player.onboarded);
   const gpsOnlyPhoto = useGame((s) => s.player.settings.gpsOnlyPhoto);
+  // Pallino sull'album quando ci sono figurine nuove da vedere.
+  const albumNew = useGame((s) => {
+    const seen = new Set(s.player.albumSeen);
+    return s.animals.some((a) => !seen.has(a.entryId));
+  });
   const [page = '', param] = useRoute();
   useAppearance();
 
@@ -67,7 +72,7 @@ export function App() {
 
   return (
     <>
-      <MapView />
+      <MapView active={route === ''} />
       {route === '' && <MapHud />}
       {route === 'collezione' && <CollectionScreen />}
       {route === 'album' && <AlbumScreen entryId={param} key={param ? 'entry' : 'list'} />}
@@ -81,7 +86,7 @@ export function App() {
           <CaptureScreen />
         </Suspense>
       )}
-      {(TABS.includes(route) || route === 'diario' || route === 'amici') && <BottomNav active={tab} />}
+      {(TABS.includes(route) || route === 'diario' || route === 'amici') && <BottomNav active={tab} dots={albumNew && route !== 'album' ? ['album'] : []} />}
       <Toasts />
       {route !== 'cattura' && <Celebrations />}
     </>

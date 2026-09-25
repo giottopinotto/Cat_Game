@@ -14,8 +14,18 @@ export function AnimalCard({ animal, photoUrl }: { animal: Animal; photoUrl?: st
   const first = animal.encounters[0];
   return (
     <div ref={tiltRef} className={`card r-${animal.rarity} ${rarityIndex(animal.rarity) >= 2 ? 'holo' : ''}`} style={rarityStyle(animal.rarity)}>
+      {animal.rarity === 'leggendario' && (
+        <div className="card-sparkles" aria-hidden>
+          <i />
+          <i />
+          <i />
+          <i />
+          <i />
+        </div>
+      )}
       <div className="card-inner">
         <div className="card-shine" aria-hidden />
+        {rarityIndex(animal.rarity) >= 2 && <div className="card-fx" aria-hidden />}
         <div className="card-photo">
           {url && <img src={url} alt={animal.name} />}
           <div className="pz">

@@ -4,6 +4,8 @@ import { levelTitle } from '../game/progress';
 import { useEffect } from 'react';
 import { GameIcon, IconBubble, Medal } from './icons';
 import { play } from './sound';
+import { unlockedAt } from './cosmetics';
+import { Fireworks } from './Fireworks';
 
 export function Toasts() {
   const toasts = useGame((s) => s.toasts);
@@ -29,6 +31,7 @@ export function Celebrations() {
   if (!c) return null;
   return (
     <div className="overlay" onClick={dismiss}>
+      <Fireworks bursts={c.kind === 'level' ? 6 : 3} key={c.kind === 'level' ? `l${c.level}` : `b${c.badge.id}${c.tier}`} />
       <div className="celebration" onClick={(e) => e.stopPropagation()}>
         <div className="rays" />
         {c.kind === 'level' ? (
@@ -44,10 +47,15 @@ export function Celebrations() {
             ) : (
               <p>Continua a esplorare e a catturare: ogni livello è una nuova sfida!</p>
             )}
+            {unlockedAt(c.level).map((u) => (
+              <p key={u.item.id} className="unlock-line">
+                <GameIcon name="sparkles" size={16} /> Nuov{u.kind === 'cornice' ? 'a cornice' : 'o sfondo'}: <b>{u.item.name}</b>
+              </p>
+            ))}
           </>
         ) : (
           <>
-            <div className="big" style={{ display: 'flex', justifyContent: 'center' }}>
+            <div className="big medal-spin" style={{ display: 'flex', justifyContent: 'center' }}>
               <Medal badgeId={c.badge.id} tier={c.tier} size={96} />
             </div>
             <h2>Medaglia {TIER_NAMES[c.tier - 1].toLowerCase()}!</h2>

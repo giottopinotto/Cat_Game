@@ -2,6 +2,9 @@ import { getEntry } from '../data/entries';
 import { RARITIES, type Animal, type Encounter, type Rarity, type Stats } from '../data/types';
 import { getAllPhotos, loadAnimals, kvGet, replaceAll, type PhotoRecord } from './db';
 import { AVATAR_IDS } from '../ui/avatars';
+import { ACCENT_IDS } from '../ui/accents';
+import { BANNERS, FRAMES, pickCosmetic } from '../ui/cosmetics';
+import { levelInfo } from './progress';
 import { forgetPhotos } from './photos';
 import { cleanFriend, MAX_FRIENDS, type Friend } from './friends';
 import { isHomeZone } from './privacy';
@@ -126,6 +129,8 @@ function cleanPlayer(p: unknown): PlayerData {
       shareKm: typeof x.settings?.shareKm === 'boolean' ? x.settings.shareKm : DEFAULT_SETTINGS.shareKm,
       shareNames: typeof x.settings?.shareNames === 'boolean' ? x.settings.shareNames : DEFAULT_SETTINGS.shareNames,
       gpsOnlyPhoto: typeof x.settings?.gpsOnlyPhoto === 'boolean' ? x.settings.gpsOnlyPhoto : DEFAULT_SETTINGS.gpsOnlyPhoto,
+      accent: ACCENT_IDS.includes(x.settings?.accent as string) ? x.settings!.accent : DEFAULT_SETTINGS.accent,
+      fx: typeof x.settings?.fx === 'boolean' ? x.settings.fx : DEFAULT_SETTINGS.fx,
     },
     lastBackupAt: clamp(x.lastBackupAt, 0, Date.now() + 86400000, 0),
     backupNagAt: clamp(x.backupNagAt, 0, Date.now() + 86400000, 0),
@@ -135,6 +140,9 @@ function cleanPlayer(p: unknown): PlayerData {
         .slice(-400)
         .map(([k, v]) => [k, clamp(v, 0, 1e6, 0)]),
     ),
+    frame: pickCosmetic(FRAMES, x.frame, levelInfo(clamp(x.xp, 0, 1e9, 0)).level),
+    banner: pickCosmetic(BANNERS, x.banner, levelInfo(clamp(x.xp, 0, 1e9, 0)).level),
+    albumSeen: (Array.isArray(x.albumSeen) ? x.albumSeen : []).filter((id): id is string => typeof id === 'string' && !!getEntry(id)).slice(0, 1000),
     friends: (Array.isArray(x.friends) ? x.friends : [])
       .slice(0, MAX_FRIENDS)
       .map(cleanFriend)

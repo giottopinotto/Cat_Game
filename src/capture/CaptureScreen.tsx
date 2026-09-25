@@ -1,5 +1,5 @@
 import { X } from 'lucide-react';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState, type CSSProperties } from 'react';
 import { SPECIES_NAME } from '../data/entries';
 import type { Species } from '../data/types';
 import { captureFixOk, releaseLocation, startLocation, tooFast, useLocation, type Fix } from '../game/location';
@@ -67,6 +67,13 @@ function toScreen(box: Box, video: HTMLVideoElement): Box {
   return { x: box.x * s + ox, y: box.y * s + oy, w: box.w * s, h: box.h * s };
 }
 
+/** Raggio dell'anello di zampette: attorno all'animale, ma sempre dentro lo schermo. */
+function ringRadius(box?: Box): number {
+  const max = Math.min(window.innerWidth, window.innerHeight) * 0.42;
+  if (!box) return Math.min(120, max);
+  return Math.round(Math.min(max, Math.max(60, Math.max(box.w, box.h) / 2 + 26)));
+}
+
 export function CaptureScreen() {
   const videoRef = useRef<HTMLVideoElement>(null);
   const frozenRef = useRef<HTMLCanvasElement>(null);
@@ -76,6 +83,7 @@ export function CaptureScreen() {
   const [models, setModels] = useState<ModelState>('loading');
   const [det, setDet] = useState<LiveDet | null>(null);
   const [flash, setFlash] = useState(0);
+  const burstAt = useRef({ x: 0, y: 0 });
   const [zoom, setZoom] = useState<ZoomRange | null>(null);
   const { fix, status: gpsStatus } = useLocation();
   const wantCamera = phase.k === 'live' || phase.k === 'analyzing' || phase.k === 'notfound';
@@ -195,6 +203,9 @@ export function CaptureScreen() {
     // Lo schermo si "ferma" subito sul primo fotogramma; gli altri due si prendono dietro le quinte.
     vibrate(30);
     play('shutter');
+    burstAt.current = det
+      ? { x: det.box.x + det.box.w / 2, y: det.box.y + det.box.h / 2 }
+      : { x: window.innerWidth / 2, y: window.innerHeight * 0.45 };
     const frames = [grabFrame(v)];
     const frozen = frozenRef.current;
     if (frozen) {
@@ -272,6 +283,17 @@ export function CaptureScreen() {
           <i />
           <i />
           <i />
+          {/* Anello di zampette: si stringe sull'animale quando lo riconosce. */}
+          <div
+            className={`paw-ring ${det && canShoot ? 'locked' : ''}`}
+            key={det ? 'on' : 'off'}
+            style={{ '--r': `${ringRadius(det?.box)}px` } as CSSProperties}
+            aria-hidden
+          >
+            {Array.from({ length: 8 }, (_, i) => (
+              <b key={i} style={{ '--i': i } as CSSProperties} />
+            ))}
+          </div>
           {det && <span className="tag">{SPECIES_NAME[det.species].one}!</span>}
         </div>
       )}
@@ -305,6 +327,13 @@ export function CaptureScreen() {
       )}
 
       {flash > 0 && <div className="flash" key={flash} />}
+      {flash > 0 && (
+        <div className="shot-burst" key={`b${flash}`} style={{ left: burstAt.current.x, top: burstAt.current.y }} aria-hidden>
+          {Array.from({ length: 14 }, (_, i) => (
+            <b key={i} style={{ '--a': `${(i / 14) * 360 + (i % 2) * 12}deg`, '--d': `${90 + (i % 3) * 45}px` } as CSSProperties} />
+          ))}
+        </div>
+      )}
 
       {phase.k === 'analyzing' && (
         <div className="scanning">

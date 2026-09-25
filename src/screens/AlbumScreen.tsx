@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, type CSSProperties } from 'react';
 import { entriesFor, entryNumber, getEntry, groupName, SPECIES_NAME } from '../data/entries';
 import { RARITY_INFO, type Animal, type BreedEntry, type Species } from '../data/types';
 import { usePhoto } from '../game/photos';
@@ -25,6 +25,20 @@ export function AlbumScreen({ entryId }: { entryId?: string }) {
   const entries = entriesFor(species);
   const found = entries.filter((e) => byEntry.has(e.id)).length;
   const visible = entries.filter((e) => (show === 'all' ? true : show === 'found' ? byEntry.has(e.id) : !byEntry.has(e.id)));
+
+  // Figurine nuove (trovate ma mai viste nell'album): si "incollano" con un'animazione.
+  const albumSeen = useGame((s) => s.player.albumSeen);
+  const markAlbumSeen = useGame((s) => s.markAlbumSeen);
+  const [freshIds] = useState(() => {
+    const seen = new Set(albumSeen);
+    return [...new Set(animals.map((a) => a.entryId))].filter((id) => !seen.has(id));
+  });
+  const freshIdx = useMemo(() => new Map(freshIds.map((id, i) => [id, i])), [freshIds]);
+  useEffect(() => {
+    if (!freshIds.length) return;
+    const t = setTimeout(() => markAlbumSeen(freshIds), 1200);
+    return () => clearTimeout(t);
+  }, [freshIds, markAlbumSeen]);
 
   return (
     <div className="screen">
@@ -72,7 +86,7 @@ export function AlbumScreen({ entryId }: { entryId?: string }) {
 
       <div className="dex-grid">
         {visible.map((e) => (
-          <DexTile key={e.id} entry={e} animals={byEntry.get(e.id)} />
+          <DexTile key={e.id} entry={e} animals={byEntry.get(e.id)} fresh={freshIdx.get(e.id)} />
         ))}
       </div>
 
@@ -85,14 +99,32 @@ function bestAnimal(list: Animal[] | undefined): Animal | undefined {
   return list?.reduce((best, a) => (a.encounters.length > best.encounters.length ? a : best), list[0]);
 }
 
-function DexTile({ entry, animals }: { entry: BreedEntry; animals?: Animal[] }) {
+/** Piccola inclinazione fissa per ogni figurina (sembrano incollate a mano). */
+function tiltOf(id: string): number {
+  let h = 0;
+  for (const c of id) h = (h * 31 + c.charCodeAt(0)) | 0;
+  return ((Math.abs(h) % 7) - 3) * 0.9;
+}
+
+function DexTile({ entry, animals, fresh }: { entry: BreedEntry; animals?: Animal[]; fresh?: number }) {
   const best = bestAnimal(animals);
   const url = usePhoto(best?.coverPhotoId, 'thumb');
+  const no = String(entryNumber(entry)).padStart(3, '0');
+  const style = { ...rarityStyle(entry.rarity), '--tilt': `${tiltOf(entry.id)}deg`, '--delay': `${Math.min(fresh ?? 0, 12) * 0.12}s` } as CSSProperties;
   return (
-    <button className={`dex-tile ${best ? '' : 'unknown'}`} style={rarityStyle(entry.rarity)} onClick={() => go(`album/${entry.id}`)}>
+    <button
+      className={`dex-tile ${best ? 'sticker' : 'unknown'} ${best && fresh !== undefined ? 'fresh' : ''}`}
+      style={style}
+      onClick={() => go(`album/${entry.id}`)}
+    >
       <div className="pic">{url ? <img src={url} alt="" loading="lazy" /> : <Silhouette species={entry.species} size={46} />}</div>
-      <span className="no">#{String(entryNumber(entry)).padStart(3, '0')}</span>
+      <span className="no">#{no}</span>
       <div className="nm">{entry.name}</div>
+      {best && (
+        <span className="stamp" aria-hidden>
+          <GameIcon name="paw" size={13} />
+        </span>
+      )}
     </button>
   );
 }

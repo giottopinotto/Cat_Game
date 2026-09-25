@@ -51,7 +51,7 @@ export function MapHud() {
     <>
       <div className="hud-top">
         <button className="player-chip" onClick={() => go('profilo')}>
-          <div className="avatar">
+          <div className={`avatar frame-${player.frame}`}>
             <AvatarArt id={player.avatar} />
             <span className="lvl">{lvl.level}</span>
           </div>

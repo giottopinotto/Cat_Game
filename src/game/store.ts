@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { DEFAULT_AVATAR } from '../ui/avatars';
+import { BANNERS, DEFAULT_BANNER, DEFAULT_FRAME, FRAMES, pickCosmetic } from '../ui/cosmetics';
 import { getEntry } from '../data/entries';
 import { RARITIES, RARITY_INFO, rarityIndex, type Animal, type Encounter, type Rarity, type Species } from '../data/types';
 import { BADGES, badgeTier, TIER_NAMES, TIER_XP, type BadgeDef } from './badges';
@@ -45,9 +46,13 @@ export interface Settings {
   shareNames: boolean;
   /** Posizione accesa solo mentre si fotografa (niente GPS mentre si cammina). */
   gpsOnlyPhoto: boolean;
+  /** Colore principale dell'app (vedi ui/accents.ts). */
+  accent: string;
+  /** Effetti animati: stagioni sulla mappa, brillantini... */
+  fx: boolean;
 }
 
-export const DEFAULT_SETTINGS: Settings = { sound: true, vibration: true, theme: 'auto', shareKm: true, shareNames: true, gpsOnlyPhoto: true };
+export const DEFAULT_SETTINGS: Settings = { sound: true, vibration: true, theme: 'auto', shareKm: true, shareNames: true, gpsOnlyPhoto: true, accent: 'lilla', fx: true };
 
 export interface PlayerData {
   name: string;
@@ -70,6 +75,11 @@ export interface PlayerData {
   backupNagAt: number;
   /** Metri camminati per giorno (AAAA-MM-GG), per il diario. */
   dailyWalk: Record<string, number>;
+  /** Cornice dell'avatar e sfondo del profilo (vedi ui/cosmetics.ts). */
+  frame: string;
+  banner: string;
+  /** Voci dell'album già viste nell'album (le nuove si "incollano" con un'animazione). */
+  albumSeen: string[];
   /** Amici aggiunti di persona, con l'ultimo profilo ricevuto. */
   friends: Friend[];
 }
@@ -124,7 +134,9 @@ interface GameState {
   celebrations: Celebration[];
   init(): Promise<void>;
   finishOnboarding(name: string, avatar: string): void;
-  updateProfile(name: string, avatar: string): void;
+  updateProfile(name: string, avatar: string, frame?: string, banner?: string): void;
+  /** Segna come già viste nell'album queste voci. */
+  markAlbumSeen(ids: string[]): void;
   ensureToday(): void;
   captureNew(d: CaptureDraft): Promise<CaptureOutcome>;
   reencounter(animalId: string, d: CaptureDraft): Promise<CaptureOutcome>;
@@ -195,6 +207,9 @@ export function defaultPlayer(): PlayerData {
     lastBackupAt: 0,
     backupNagAt: 0,
     dailyWalk: {},
+    frame: DEFAULT_FRAME,
+    banner: DEFAULT_BANNER,
+    albumSeen: [],
     friends: [],
   };
 }
@@ -212,6 +227,7 @@ export function normalizePlayer(stored: Partial<PlayerData> | undefined): Player
     settings: { ...DEFAULT_SETTINGS, ...stored.settings },
     dailyWalk: { ...stored.dailyWalk },
     // Le vecchie "carte degli amici" (senza chiave) non si usano più.
+    albumSeen: Array.isArray(stored.albumSeen) ? stored.albumSeen : [],
     friends: (stored.friends ?? []).filter((f) => typeof (f as Partial<Friend>).pub === 'string'),
   };
 }
@@ -383,8 +399,28 @@ export const useGame = create<GameState>((set, get) => {
       persistPlayer();
     },
 
-    updateProfile(name, avatar) {
-      set((s) => ({ player: { ...s.player, name, avatar } }));
+    updateProfile(name, avatar, frame, banner) {
+      set((s) => {
+        const level = levelInfo(s.player.xp).level;
+        return {
+          player: {
+            ...s.player,
+            name,
+            avatar,
+            frame: frame === undefined ? s.player.frame : pickCosmetic(FRAMES, frame, level),
+            banner: banner === undefined ? s.player.banner : pickCosmetic(BANNERS, banner, level),
+          },
+        };
+      });
+      persistPlayer();
+    },
+
+    markAlbumSeen(ids) {
+      const p = get().player;
+      const seen = new Set(p.albumSeen);
+      const add = ids.filter((id) => !seen.has(id));
+      if (!add.length) return;
+      set({ player: { ...p, albumSeen: [...p.albumSeen, ...add] } });
       persistPlayer();
     },
 

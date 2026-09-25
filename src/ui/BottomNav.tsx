@@ -11,13 +11,14 @@ const TABS = [
 
 // Dalla mappa si "entra" in una scheda (il tasto indietro riporta alla mappa);
 // tra una scheda e l'altra invece si sostituisce la pagina corrente.
-export function BottomNav({ active }: { active: string }) {
+export function BottomNav({ active, dots = [] }: { active: string; dots?: string[] }) {
   return (
     <nav className="nav">
       {TABS.map((t) =>
         t ? (
           <button key={t.path} className={`nav-item ${active === t.path ? 'active' : ''}`} onClick={() => t.path !== active && go(t.path, active !== '')}>
             <t.Icon size={25} strokeWidth={2.3} />
+            {dots.includes(t.path) && <i className="nav-dot" aria-label="Novità" />}
             {t.label}
           </button>
         ) : (

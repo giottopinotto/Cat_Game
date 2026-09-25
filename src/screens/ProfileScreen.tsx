@@ -1,5 +1,7 @@
-import { CalendarDays, Download, House, Info, MapPinOff, Moon, Pencil, ShieldCheck, Smartphone, Trash2, Upload, Users, Vibrate, Volume2 } from 'lucide-react';
-import { useMemo, useRef, useState } from 'react';
+import { CalendarDays, Download, House, Check, Info, Lock, MapPinOff, Moon, Palette, Sparkles, Pencil, ShieldCheck, Smartphone, Trash2, Upload, Users, Vibrate, Volume2 } from 'lucide-react';
+import { useMemo, useRef, useState, type CSSProperties } from 'react';
+import { ACCENTS, accentColor, getAccent } from '../ui/accents';
+import { BANNERS, FRAMES } from '../ui/cosmetics';
 import { BADGES, badgeTier, TIER_NAMES, tierText, type BadgeSummary } from '../game/badges';
 import { importBackup } from '../game/backup';
 import { wipeAll } from '../game/db';
@@ -66,8 +68,8 @@ export function ProfileScreen() {
 
   return (
     <div className="screen">
-      <div className="profile-head">
-        <button className="avatar" onClick={() => setOpen('edit')} aria-label="Modifica profilo">
+      <div className={`profile-head banner-${player.banner}`}>
+        <button className={`avatar frame-${player.frame}`} onClick={() => setOpen('edit')} aria-label="Modifica profilo">
           <AvatarArt id={player.avatar} />
           <span className="lvl">{lvl.level}</span>
         </button>
@@ -209,6 +211,46 @@ export function ProfileScreen() {
             ))}
           </div>
         </div>
+        <div className="menu-block">
+          <div className="row" style={{ gap: 12, marginBottom: 10 }}>
+            <span className="ico">
+              <Palette size={19} />
+            </span>
+            <span className="grow">
+              Colore dell'app
+              <div className="muted" style={{ fontSize: 13 }}>
+                {getAccent(settings.accent).name}
+              </div>
+            </span>
+          </div>
+          <div className="accent-swatches" role="radiogroup" aria-label="Colore dell'app">
+            {ACCENTS.map((a) => (
+              <button
+                key={a.id}
+                role="radio"
+                aria-checked={settings.accent === a.id}
+                aria-label={a.name}
+                className={settings.accent === a.id ? 'active' : ''}
+                style={{ '--c': accentColor(a.id) } as CSSProperties}
+                onClick={() => updateSettings({ accent: a.id })}
+              >
+                {settings.accent === a.id && <Check size={18} strokeWidth={3} />}
+              </button>
+            ))}
+          </div>
+        </div>
+        <button onClick={() => updateSettings({ fx: !settings.fx })}>
+          <span className="ico">
+            <Sparkles size={19} />
+          </span>
+          <span className="grow">
+            Effetti speciali
+            <div className="muted" style={{ fontSize: 13 }}>
+              Stagioni sulla mappa, brillantini e fuochi d'artificio. Spegnili per risparmiare batteria
+            </div>
+          </span>
+          <Switch on={settings.fx} />
+        </button>
         <button onClick={() => void saveBackup()}>
           <span className="ico">
             <Download size={19} />
@@ -365,6 +407,9 @@ function EditProfile({ onClose }: { onClose: () => void }) {
   const updateProfile = useGame((s) => s.updateProfile);
   const [name, setName] = useState(player.name);
   const [avatar, setAvatar] = useState(player.avatar);
+  const [frame, setFrame] = useState(player.frame);
+  const [banner, setBanner] = useState(player.banner);
+  const level = levelInfo(player.xp).level;
   return (
     <Sheet onClose={onClose}>
       <h2>Il tuo profilo</h2>
@@ -382,12 +427,46 @@ function EditProfile({ onClose }: { onClose: () => void }) {
           ))}
         </div>
       </div>
+      <div className="field">
+        <span>Cornice</span>
+        <div className="cosmetic-grid">
+          {FRAMES.map((f) => (
+            <button key={f.id} className={frame === f.id ? 'active' : ''} disabled={f.level > level} onClick={() => setFrame(f.id)}>
+              {f.level > level && (
+                <span className="lock">
+                  <Lock size={11} /> Liv. {f.level}
+                </span>
+              )}
+              <span className={`avatar frame-${f.id}`}>
+                <AvatarArt id={avatar} />
+              </span>
+              {f.name}
+            </button>
+          ))}
+        </div>
+      </div>
+      <div className="field">
+        <span>Sfondo del profilo</span>
+        <div className="cosmetic-grid">
+          {BANNERS.map((b) => (
+            <button key={b.id} className={banner === b.id ? 'active' : ''} disabled={b.level > level} onClick={() => setBanner(b.id)}>
+              {b.level > level && (
+                <span className="lock">
+                  <Lock size={11} /> Liv. {b.level}
+                </span>
+              )}
+              <span className={`profile-head banner-swatch banner-${b.id}`} />
+              {b.name}
+            </button>
+          ))}
+        </div>
+      </div>
       <button
         className="btn btn-primary btn-block"
         style={{ marginTop: 18 }}
         disabled={!name.trim()}
         onClick={() => {
-          updateProfile(name.trim(), avatar);
+          updateProfile(name.trim(), avatar, frame, banner);
           onClose();
         }}
       >
