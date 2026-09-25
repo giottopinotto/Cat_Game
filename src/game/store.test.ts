@@ -91,29 +91,29 @@ describe('camminata ed esplorazione', () => {
   it('una nuova zona dà XP; spostarsi a piedi conta i metri', () => {
     const at = Date.now();
     const s = useGame.getState();
-    s.handleFix({ lat: 45.4642, lng: 9.19, accuracy: 10, heading: null, at });
+    s.handleFix({ lat: 45.4642, lng: 9.19, accuracy: 10, heading: null, speed: null, at });
     expect(useGame.getState().player.zones).toHaveLength(1);
     expect(useGame.getState().player.xp).toBeGreaterThanOrEqual(XP_ZONE);
     // ~110 m in 80 secondi: camminata
-    s.handleFix({ lat: 45.4652, lng: 9.19, accuracy: 10, heading: null, at: at + 80_000 });
+    s.handleFix({ lat: 45.4652, lng: 9.19, accuracy: 10, heading: null, speed: null, at: at + 80_000 });
     expect(useGame.getState().player.walkedM).toBeGreaterThan(100);
   });
 
   it('dopo una pausa lunga la distanza non conta', () => {
     const at = Date.now();
     const s = useGame.getState();
-    s.handleFix({ lat: 45.0, lng: 9.0, accuracy: 10, heading: null, at });
+    s.handleFix({ lat: 45.0, lng: 9.0, accuracy: 10, heading: null, speed: null, at });
     // 3 km dopo un'ora: app chiusa, non sappiamo come ci si è spostati
-    s.handleFix({ lat: 45.027, lng: 9.0, accuracy: 10, heading: null, at: at + 3_600_000 });
+    s.handleFix({ lat: 45.027, lng: 9.0, accuracy: 10, heading: null, speed: null, at: at + 3_600_000 });
     expect(useGame.getState().player.walkedM).toBe(0);
   });
 
   it('gli spostamenti troppo veloci (auto, bus) non contano', () => {
     const at = Date.now();
     const s = useGame.getState();
-    s.handleFix({ lat: 45.0, lng: 9.0, accuracy: 10, heading: null, at });
+    s.handleFix({ lat: 45.0, lng: 9.0, accuracy: 10, heading: null, speed: null, at });
     // 1,1 km in 20 secondi
-    s.handleFix({ lat: 45.01, lng: 9.0, accuracy: 10, heading: null, at: at + 20_000 });
+    s.handleFix({ lat: 45.01, lng: 9.0, accuracy: 10, heading: null, speed: null, at: at + 20_000 });
     expect(useGame.getState().player.walkedM).toBe(0);
   });
 });

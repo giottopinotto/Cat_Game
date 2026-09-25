@@ -2,7 +2,7 @@ import { X } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { SPECIES_NAME } from '../data/entries';
 import type { Species } from '../data/types';
-import { captureFixOk, useLocation, type Fix } from '../game/location';
+import { captureFixOk, tooFast, useLocation, type Fix } from '../game/location';
 import type { CaptureOutcome } from '../game/store';
 import { mapApi } from '../map/MapView';
 import { back } from '../router';
@@ -143,12 +143,13 @@ export function CaptureScreen() {
   }, [phase.k, camera, models]);
 
   const gpsOk = captureFixOk(fix);
-  const canShoot = phase.k === 'live' && camera === 'ready' && models === 'ready' && gpsOk;
+  const moving = tooFast(fix);
+  const canShoot = phase.k === 'live' && camera === 'ready' && models === 'ready' && gpsOk && !moving;
 
   async function shoot() {
     const v = videoRef.current;
     const fixNow = useLocation.getState().fix;
-    if (!v || !v.videoWidth || !canShoot || !captureFixOk(fixNow)) return;
+    if (!v || !v.videoWidth || !canShoot || !captureFixOk(fixNow) || tooFast(fixNow)) return;
     vibrate(30);
     setFlash((n) => n + 1);
     const frame = grabFrame(v);
@@ -178,6 +179,7 @@ export function CaptureScreen() {
   let status = 'Inquadra un cane o un gatto';
   if (models === 'loading') status = "Preparo l'occhio magico…";
   else if (models === 'error') status = 'Errore nel caricare la AI';
+  else if (moving) status = '🚗 Ti stai muovendo troppo veloce: fermati per catturare';
   else if (!gpsOk) status = gpsStatus === 'denied' ? 'Serve la posizione GPS' : 'Aspetto il segnale GPS…';
   else if (det) status = `${SPECIES_NAME[det.species].emoji} ${SPECIES_NAME[det.species].one} trovato! Scatta!`;
 

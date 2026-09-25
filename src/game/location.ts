@@ -7,6 +7,8 @@ export interface Fix {
   lng: number;
   accuracy: number;
   heading: number | null;
+  /** Velocità in m/s (se il dispositivo la fornisce). */
+  speed: number | null;
   at: number;
 }
 
@@ -45,6 +47,7 @@ export function startLocation(): void {
         lng: p.coords.longitude,
         accuracy: p.coords.accuracy,
         heading: p.coords.heading ?? null,
+        speed: p.coords.speed ?? null,
         at: p.timestamp || Date.now(),
       };
       useLocation.setState({ status: 'ok', fix, error: null });
@@ -75,6 +78,13 @@ export function retryLocation(): void {
   stopLocation();
   useLocation.setState({ status: 'waiting', error: null });
   startLocation();
+}
+
+/** Oltre ~25 km/h si è su un veicolo: niente catture (e mai giocare mentre si guida!). */
+export const MAX_CAPTURE_SPEED = 7;
+
+export function tooFast(fix: Fix | null): boolean {
+  return !!fix && fix.speed !== null && fix.speed > MAX_CAPTURE_SPEED && Date.now() - fix.at < 30000;
 }
 
 export function captureFixOk(fix: Fix | null): fix is Fix {

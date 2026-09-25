@@ -140,7 +140,7 @@ export function ProfileScreen() {
           <span className="grow">
             Salva un backup
             <div className="muted" style={{ fontSize: 13 }}>
-              I dati sono solo su questo telefono: fai un backup ogni tanto!
+              I dati sono solo su questo telefono: fai un backup ogni tanto! Contiene foto e luoghi delle catture: tienilo per te.
             </div>
           </span>
         </button>
