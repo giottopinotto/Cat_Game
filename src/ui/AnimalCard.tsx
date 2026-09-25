@@ -1,31 +1,18 @@
 import { getEntry, SPECIES_NAME } from '../data/entries';
-import { RARITY_INFO, rarityIndex, STAT_LABELS, type Animal } from '../data/types';
+import { RARITY_INFO, STAT_LABELS, type Animal } from '../data/types';
 import { usePhoto } from '../game/photos';
 import { friendshipLevel, pawPoints } from '../game/progress';
 import { formatDate, RarityPill, rarityStyle } from './common';
 import { GameIcon, Hearts, SpeciesIcon } from './icons';
-import { useTilt } from './useTilt';
 
 export function AnimalCard({ animal, photoUrl }: { animal: Animal; photoUrl?: string }) {
-  const tiltRef = useTilt<HTMLDivElement>();
   const entry = getEntry(animal.entryId);
   const stored = usePhoto(photoUrl ? undefined : animal.coverPhotoId, 'card');
   const url = photoUrl ?? stored;
   const first = animal.encounters[0];
   return (
-    <div ref={tiltRef} className={`card r-${animal.rarity} ${rarityIndex(animal.rarity) >= 2 ? 'holo' : ''}`} style={rarityStyle(animal.rarity)}>
-      {animal.rarity === 'leggendario' && (
-        <div className="card-sparkles" aria-hidden>
-          <i />
-          <i />
-          <i />
-          <i />
-          <i />
-        </div>
-      )}
+    <div className={`card r-${animal.rarity}`} style={rarityStyle(animal.rarity)}>
       <div className="card-inner">
-        <div className="card-shine" aria-hidden />
-        {rarityIndex(animal.rarity) >= 2 && <div className="card-fx" aria-hidden />}
         <div className="card-photo">
           {url && <img src={url} alt={animal.name} />}
           <div className="pz">

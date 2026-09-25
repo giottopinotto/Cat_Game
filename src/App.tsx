@@ -67,7 +67,7 @@ export function App() {
 
   return (
     <>
-      <MapView active={route === ''} />
+      <MapView />
       {route === '' && <MapHud />}
       {route === 'collezione' && <CollectionScreen />}
       {route === 'album' && <AlbumScreen entryId={param} key={param ? 'entry' : 'list'} />}

@@ -38,11 +38,9 @@ e i dati restano sul telefono.
   Mai posizioni, foto, date od orari. Classifica e confronto dell'album.
 - 🎉 **Eventi a tempo** (Giornata degli animali, Halloween, Natale, domeniche al parco...) con XP extra.
 - 📅 **Diario** delle uscite: calendario con animali visti e km fatti ogni giorno.
-- ✨ **Grafica**: carte con effetti per rarità (onde, stelle, brillantini d'oro), mirino a zampette,
-  mappa con stagioni, ora del giorno ed eventi (foglie, neve, lucciole, pipistrelli ad Halloween),
-  album a figurine, fuochi d'artificio a zampetta, **un premio per ogni livello** (33 avatar, cornici,
-  sfondi e pacchetti delle carte) e
-  **8 colori a scelta** (lilla di base). Gli effetti si spengono dal profilo o con "riduci animazioni".
+- ✨ **Grafica**: carte con cornici per rarità, mirino a zampette, album a figurine, fuochi d'artificio
+  a zampetta, **un premio per ogni livello** (33 avatar, cornici, sfondi e pacchetti delle carte) e
+  **8 colori a scelta** (lilla di base). Le animazioni si spengono dal profilo o con "riduci animazioni".
 - 🌙 **Tema scuro** la sera (o sempre), **suoni** e vibrazioni disattivabili, **promemoria del backup**.
 - 📱 **Installabile** sulla schermata Home (Android e iPhone). Dopo il primo utilizzo si può catturare
   anche senza connessione (la mappa mostra solo le zone già viste).

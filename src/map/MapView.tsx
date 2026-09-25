@@ -13,8 +13,6 @@ import { go } from '../router';
 import { avatarSvg } from '../ui/avatars';
 import { IconBubble } from '../ui/icons';
 import { useTheme } from '../ui/theme';
-import { Ambient } from './Ambient';
-import { dayPhase, skyColors } from './ambient';
 import { accentColor, DEFAULT_ACCENT, getAccent, hsl } from '../ui/accents';
 
 // Il worker di MapLibre va impacchettato da Vite insieme alle sue dipendenze.
@@ -308,7 +306,7 @@ function animalMarkerEl(a: Animal): HTMLElement {
   return el;
 }
 
-export function MapView({ active = true }: { active?: boolean }) {
+export function MapView() {
   const container = useRef<HTMLDivElement>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
   const playerRef = useRef<{ marker: maplibregl.Marker; el: HTMLElement } | null>(null);
@@ -429,22 +427,6 @@ export function MapView({ active = true }: { active?: boolean }) {
     if (map && mapApi.ready) applyGameStyle(map, dark, accent);
   }, [dark, accent, styleReady]);
 
-  // Cielo (si vede inclinando la mappa): cambia con l'ora del giorno.
-  const [skyPhase, setSkyPhase] = useState(dayPhase());
-  useEffect(() => {
-    const t = setInterval(() => setSkyPhase(dayPhase()), 60000);
-    return () => clearInterval(t);
-  }, []);
-  useEffect(() => {
-    const map = mapRef.current;
-    if (!map || !mapApi.ready) return;
-    const c = skyColors(dark && skyPhase === 'day' ? 'night' : skyPhase, getAccent(accent).h);
-    try {
-      map.setSky({ 'sky-color': c.top, 'horizon-color': c.horizon, 'fog-color': c.fog, 'sky-horizon-blend': 0.6, 'horizon-fog-blend': 0.7, 'fog-ground-blend': 0.4 });
-    } catch {
-      /* cielo non supportato */
-    }
-  }, [dark, accent, skyPhase, styleReady]);
 
   // Con la posizione solo per le foto la mappa non mostra niente di personale:
   // zone esplorate, animali e zona di casa compaiono solo con il GPS attivo.
@@ -506,7 +488,6 @@ export function MapView({ active = true }: { active?: boolean }) {
   return (
     <div className="map-wrap">
       <div ref={container} style={{ position: 'absolute', inset: 0 }} />
-      <Ambient active={active} />
       {failed && (
         <div className="map-fallback">
           <div>

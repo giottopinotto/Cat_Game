@@ -262,7 +262,7 @@ export function ProfileScreen() {
           <span className="grow">
             Effetti speciali
             <div className="muted" style={{ fontSize: 13 }}>
-              Stagioni sulla mappa, brillantini e fuochi d'artificio. Spegnili per risparmiare batteria
+              Fuochi d'artificio, scintille e animazioni. Spegnili per risparmiare batteria
             </div>
           </span>
           <Switch on={settings.fx} />

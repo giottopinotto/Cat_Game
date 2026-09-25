@@ -836,9 +836,6 @@ p {
   padding: 7px;
   background: var(--frame);
   box-shadow: 0 14px 34px color-mix(in srgb, var(--rarity) 45%, transparent), var(--shadow);
-  transform: perspective(900px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg));
-  transition: transform 0.18s ease-out;
-  transform-style: preserve-3d;
 }
 
 /* Cornici: più la carta è rara, più la cornice è preziosa. */
@@ -863,38 +860,6 @@ p {
 .card.r-leggendario {
   --frame: linear-gradient(135deg, #fff7d6 0%, #f5b400 26%, #fff3b0 48%, #d68f00 72%, #fff2c2 100%);
   padding: 10px;
-  animation: legend-glow 2.6s ease-in-out infinite;
-}
-
-@keyframes legend-glow {
-  50% {
-    box-shadow: 0 14px 44px rgba(245, 180, 0, 0.7), 0 0 26px rgba(255, 214, 90, 0.65);
-  }
-}
-
-/* Lampo di luce che scorre sulla cornice delle carte rare. */
-.card.r-raro::before,
-.card.r-epico::before,
-.card.r-leggendario::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  pointer-events: none;
-  background: linear-gradient(115deg, transparent 35%, rgba(255, 255, 255, 0.85) 50%, transparent 65%);
-  background-size: 260% 100%;
-  animation: frame-shine 3.2s ease-in-out infinite;
-  mix-blend-mode: overlay;
-}
-
-@keyframes frame-shine {
-  0% {
-    background-position: 130% 0;
-  }
-  55%,
-  100% {
-    background-position: -130% 0;
-  }
 }
 
 .card-inner {
@@ -1010,35 +975,6 @@ p {
   margin-top: 12px;
   font-size: 12px;
   color: var(--ink-soft);
-}
-
-/* Riflesso olografico: si sposta inclinando il telefono (--px, --py). */
-.card.holo .card-shine {
-  position: absolute;
-  inset: 0;
-  z-index: 2;
-  pointer-events: none;
-  border-radius: inherit;
-  background:
-    radial-gradient(circle at var(--px, 50%) var(--py, 30%), rgba(255, 255, 255, 0.55), transparent 45%),
-    linear-gradient(
-      115deg,
-      transparent 20%,
-      rgba(255, 120, 200, 0.28) 35%,
-      rgba(120, 200, 255, 0.28) 45%,
-      rgba(140, 255, 190, 0.26) 55%,
-      rgba(255, 230, 120, 0.26) 65%,
-      transparent 80%
-    );
-  background-size: 100% 100%, 240% 240%;
-  background-position: 0 0, var(--px, 50%) var(--py, 50%);
-  mix-blend-mode: soft-light;
-  opacity: 0.9;
-  transition: background-position 0.15s ease-out;
-}
-
-.card.r-raro .card-shine {
-  opacity: 0.55;
 }
 
 .hearts {
@@ -1715,14 +1651,7 @@ p {
 }
 
 .reveal .card {
-  /* "backwards": finita l'animazione torna attiva l'inclinazione della carta. */
   animation: card-in 0.9s cubic-bezier(0.2, 1.1, 0.3, 1) backwards;
-}
-
-.reveal .card.r-leggendario {
-  animation:
-    card-in 0.9s cubic-bezier(0.2, 1.1, 0.3, 1) backwards,
-    legend-glow 2.6s 0.9s ease-in-out infinite;
 }
 
 @keyframes card-in {
@@ -3240,125 +3169,6 @@ textarea.input {
   box-shadow: 0 0 0 3px var(--surface), 0 0 0 5px var(--c);
 }
 
-/* ---------- Effetti speciali delle carte per rarità ----------
-   Onde (rare), stelle (epiche), brillantini d'oro (leggendarie): si muovono
-   inclinando il telefono (--px, --py) e hanno una loro animazione. */
-
-.card-fx {
-  position: absolute;
-  inset: 0;
-  z-index: 3;
-  pointer-events: none;
-  border-radius: inherit;
-  overflow: hidden;
-}
-
-.card-fx::before,
-.card-fx::after {
-  content: '';
-  position: absolute;
-  inset: -20%;
-  pointer-events: none;
-}
-
-.card.r-raro .card-fx::before {
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='18'%3E%3Cpath d='M0 9 Q12 1 24 9 T48 9' fill='none' stroke='white' stroke-width='1.6' stroke-opacity='0.8'/%3E%3C/svg%3E");
-  background-size: 48px 18px;
-  background-position: calc(var(--px, 50%) * 0.6) calc(var(--py, 50%) * 0.6);
-  mix-blend-mode: overlay;
-  opacity: 0.32;
-  transform: rotate(-12deg);
-  animation: fx-drift 9s linear infinite;
-}
-
-.card.r-raro .card-fx::after {
-  background: linear-gradient(100deg, transparent 30%, rgba(160, 205, 255, 0.45) 45%, rgba(255, 255, 255, 0.6) 50%, rgba(160, 205, 255, 0.45) 55%, transparent 70%);
-  background-size: 250% 100%;
-  background-position: var(--px, 50%) 0;
-  mix-blend-mode: soft-light;
-}
-
-.card.r-epico .card-fx::before {
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cpath d='M47 18 L48.96 23.04 L54 25 L48.96 26.96 L47 32 L45.04 26.96 L40 25 L45.04 23.04 Z' fill='white' fill-opacity='1'/%3E%3Cpath d='M12 12.5 L12.7 14.3 L14.5 15 L12.7 15.7 L12 17.5 L11.3 15.7 L9.5 15 L11.3 14.3 Z' fill='white' fill-opacity='0.8'/%3E%3Cpath d='M80 9.5 L80.98 12.02 L83.5 13 L80.98 13.98 L80 16.5 L79.02 13.98 L76.5 13 L79.02 12.02 Z' fill='white' fill-opacity='0.6'/%3E%3Cpath d='M17 54 L18.96 59.04 L24 61 L18.96 62.96 L17 68 L15.04 62.96 L10 61 L15.04 59.04 Z' fill='white' fill-opacity='0.6'/%3E%3Cpath d='M36 10 L37.96 15.04 L43 17 L37.96 18.96 L36 24 L34.04 18.96 L29 17 L34.04 15.04 Z' fill='white' fill-opacity='0.6'/%3E%3Cpath d='M111 75.5 L111.7 77.3 L113.5 78 L111.7 78.7 L111 80.5 L110.3 78.7 L108.5 78 L110.3 77.3 Z' fill='white' fill-opacity='0.6'/%3E%3Cpath d='M86 83.5 L86.7 85.3 L88.5 86 L86.7 86.7 L86 88.5 L85.3 86.7 L83.5 86 L85.3 85.3 Z' fill='white' fill-opacity='1'/%3E%3Cpath d='M80 53.5 L80.7 55.3 L82.5 56 L80.7 56.7 L80 58.5 L79.3 56.7 L77.5 56 L79.3 55.3 Z' fill='white' fill-opacity='0.6'/%3E%3Cpath d='M11 73.5 L11.98 76.02 L14.5 77 L11.98 77.98 L11 80.5 L10.02 77.98 L7.5 77 L10.02 76.02 Z' fill='white' fill-opacity='0.8'/%3E%3Cpath d='M59 21.5 L59.7 23.3 L61.5 24 L59.7 24.7 L59 26.5 L58.3 24.7 L56.5 24 L58.3 23.3 Z' fill='white' fill-opacity='1'/%3E%3Cpath d='M45 73.5 L45.98 76.02 L48.5 77 L45.98 77.98 L45 80.5 L44.02 77.98 L41.5 77 L44.02 76.02 Z' fill='white' fill-opacity='0.6'/%3E%3Cpath d='M80 75.5 L80.98 78.02 L83.5 79 L80.98 79.98 L80 82.5 L79.02 79.98 L76.5 79 L79.02 78.02 Z' fill='white' fill-opacity='0.8'/%3E%3Cpath d='M18 73.5 L18.7 75.3 L20.5 76 L18.7 76.7 L18 78.5 L17.3 76.7 L15.5 76 L17.3 75.3 Z' fill='white' fill-opacity='1'/%3E%3Cpath d='M13 81.5 L13.98 84.02 L16.5 85 L13.98 85.98 L13 88.5 L12.02 85.98 L9.5 85 L12.02 84.02 Z' fill='white' fill-opacity='0.8'/%3E%3C/svg%3E");
-  background-size: 120px 120px;
-  background-position: var(--px, 50%) var(--py, 50%);
-  mix-blend-mode: overlay;
-  animation: fx-twinkle 2.4s ease-in-out infinite;
-}
-
-.card.r-epico .card-fx::after {
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='90' height='90'%3E%3Ccircle cx='70' cy='56' r='1.1' fill='white' fill-opacity='0.8'/%3E%3Ccircle cx='76' cy='60' r='1.1' fill='white' fill-opacity='0.8'/%3E%3Ccircle cx='33' cy='25' r='1.5' fill='white' fill-opacity='0.5'/%3E%3Ccircle cx='12' cy='75' r='1.1' fill='white' fill-opacity='1'/%3E%3Ccircle cx='65' cy='45' r='1.5' fill='white' fill-opacity='0.8'/%3E%3Ccircle cx='38' cy='79' r='0.8' fill='white' fill-opacity='0.5'/%3E%3Ccircle cx='67' cy='55' r='0.8' fill='white' fill-opacity='0.8'/%3E%3Ccircle cx='21' cy='64' r='1.1' fill='white' fill-opacity='0.5'/%3E%3Ccircle cx='87' cy='11' r='1.5' fill='white' fill-opacity='1'/%3E%3Ccircle cx='42' cy='45' r='1.5' fill='white' fill-opacity='0.8'/%3E%3Ccircle cx='78' cy='65' r='1.5' fill='white' fill-opacity='0.8'/%3E%3Ccircle cx='10' cy='13' r='1.1' fill='white' fill-opacity='0.8'/%3E%3Ccircle cx='87' cy='10' r='0.8' fill='white' fill-opacity='1'/%3E%3Ccircle cx='41' cy='84' r='1.5' fill='white' fill-opacity='1'/%3E%3Ccircle cx='59' cy='38' r='1.5' fill='white' fill-opacity='0.8'/%3E%3Ccircle cx='87' cy='46' r='0.8' fill='white' fill-opacity='0.8'/%3E%3Ccircle cx='47' cy='23' r='1.5' fill='white' fill-opacity='0.5'/%3E%3Ccircle cx='65' cy='9' r='0.8' fill='white' fill-opacity='0.8'/%3E%3Ccircle cx='18' cy='33' r='1.1' fill='white' fill-opacity='0.8'/%3E%3Ccircle cx='65' cy='12' r='0.8' fill='white' fill-opacity='0.8'/%3E%3Ccircle cx='53' cy='72' r='1.1' fill='white' fill-opacity='0.5'/%3E%3Ccircle cx='57' cy='72' r='1.1' fill='white' fill-opacity='1'/%3E%3C/svg%3E"), radial-gradient(circle at var(--px, 50%) var(--py, 40%), rgba(230, 190, 255, 0.5), transparent 50%);
-  background-size: 90px 90px, 100% 100%;
-  background-position: calc(100% - var(--px, 50%)) calc(100% - var(--py, 50%)), 0 0;
-  mix-blend-mode: screen;
-  opacity: 0.7;
-  animation: fx-twinkle 3.1s ease-in-out infinite reverse;
-}
-
-.card.r-leggendario .card-fx::before {
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='70' height='70'%3E%3Ccircle cx='29.2' cy='25.4' r='1.6' fill='%23ffd45c' fill-opacity='0.6'/%3E%3Ccircle cx='6.6' cy='11.3' r='0.9' fill='%23fff6c8' fill-opacity='0.85'/%3E%3Ccircle cx='57.5' cy='13.4' r='1.2' fill='%23fff6c8' fill-opacity='0.6'/%3E%3Ccircle cx='29.5' cy='26.1' r='1.2' fill='%23ffd45c' fill-opacity='1'/%3E%3Ccircle cx='59.4' cy='65.6' r='0.6' fill='%23f5b400' fill-opacity='1'/%3E%3Ccircle cx='55.3' cy='27.7' r='1.6' fill='%23f5b400' fill-opacity='0.6'/%3E%3Ccircle cx='33.7' cy='28.2' r='0.9' fill='%23fff6c8' fill-opacity='0.6'/%3E%3Ccircle cx='31.0' cy='8.5' r='0.6' fill='%23fff6c8' fill-opacity='0.6'/%3E%3Ccircle cx='39.5' cy='37.5' r='1.2' fill='%23ffe9a0' fill-opacity='0.6'/%3E%3Ccircle cx='5.8' cy='15.1' r='1.6' fill='%23ffd45c' fill-opacity='1'/%3E%3Ccircle cx='18.2' cy='24.6' r='1.2' fill='%23f5b400' fill-opacity='0.6'/%3E%3Ccircle cx='8.8' cy='34.2' r='1.6' fill='%23f5b400' fill-opacity='0.85'/%3E%3Ccircle cx='22.2' cy='10.8' r='1.2' fill='%23ffffff' fill-opacity='0.85'/%3E%3Ccircle cx='57.4' cy='12.0' r='0.6' fill='%23ffd45c' fill-opacity='1'/%3E%3Ccircle cx='25.6' cy='47.9' r='0.6' fill='%23ffe9a0' fill-opacity='0.85'/%3E%3Ccircle cx='67.5' cy='59.7' r='1.2' fill='%23ffe9a0' fill-opacity='0.85'/%3E%3Ccircle cx='62.8' cy='25.2' r='0.9' fill='%23ffe9a0' fill-opacity='1'/%3E%3Ccircle cx='54.0' cy='23.4' r='0.9' fill='%23ffe9a0' fill-opacity='0.6'/%3E%3Ccircle cx='55.8' cy='56.6' r='0.9' fill='%23ffd45c' fill-opacity='1'/%3E%3Ccircle cx='34.5' cy='50.7' r='0.6' fill='%23ffffff' fill-opacity='0.85'/%3E%3Ccircle cx='18.6' cy='48.1' r='1.2' fill='%23f5b400' fill-opacity='1'/%3E%3Ccircle cx='68.2' cy='65.9' r='1.2' fill='%23fff6c8' fill-opacity='0.6'/%3E%3Ccircle cx='7.9' cy='33.0' r='1.2' fill='%23ffd45c' fill-opacity='0.85'/%3E%3Ccircle cx='43.4' cy='62.2' r='0.6' fill='%23f5b400' fill-opacity='1'/%3E%3Ccircle cx='24.4' cy='44.7' r='0.6' fill='%23f5b400' fill-opacity='1'/%3E%3Ccircle cx='52.0' cy='33.5' r='0.9' fill='%23f5b400' fill-opacity='1'/%3E%3Ccircle cx='23.6' cy='55.5' r='1.6' fill='%23f5b400' fill-opacity='0.85'/%3E%3Ccircle cx='51.5' cy='6.8' r='0.9' fill='%23ffd45c' fill-opacity='0.6'/%3E%3Ccircle cx='2.9' cy='41.2' r='1.6' fill='%23ffd45c' fill-opacity='1'/%3E%3Ccircle cx='57.2' cy='67.7' r='1.2' fill='%23ffd45c' fill-opacity='1'/%3E%3Ccircle cx='38.3' cy='2.5' r='0.6' fill='%23ffe9a0' fill-opacity='1'/%3E%3Ccircle cx='64.5' cy='30.5' r='0.9' fill='%23ffd45c' fill-opacity='0.6'/%3E%3Ccircle cx='18.1' cy='20.9' r='0.9' fill='%23ffe9a0' fill-opacity='0.85'/%3E%3Ccircle cx='18.6' cy='29.5' r='0.9' fill='%23fff6c8' fill-opacity='1'/%3E%3Ccircle cx='25.1' cy='32.2' r='1.6' fill='%23ffe9a0' fill-opacity='0.6'/%3E%3Ccircle cx='37.2' cy='36.6' r='0.6' fill='%23f5b400' fill-opacity='0.6'/%3E%3Ccircle cx='42.4' cy='53.8' r='0.9' fill='%23ffd45c' fill-opacity='0.6'/%3E%3Ccircle cx='33.2' cy='50.3' r='0.6' fill='%23ffffff' fill-opacity='1'/%3E%3Ccircle cx='36.2' cy='38.8' r='0.6' fill='%23ffe9a0' fill-opacity='0.6'/%3E%3Ccircle cx='17.9' cy='19.8' r='0.6' fill='%23ffe9a0' fill-opacity='0.85'/%3E%3C/svg%3E");
-  background-size: 70px 70px;
-  background-position: var(--px, 50%) var(--py, 50%);
-  mix-blend-mode: color-dodge;
-  opacity: 0.85;
-  animation: fx-twinkle 1.8s ease-in-out infinite;
-}
-
-.card.r-leggendario .card-fx::after {
-  background:
-    radial-gradient(circle at var(--px, 50%) var(--py, 35%), rgba(255, 236, 150, 0.65), transparent 42%),
-    conic-gradient(from 0deg at 50% 50%, transparent 0deg, rgba(255, 215, 90, 0.35) 40deg, transparent 80deg, transparent 180deg, rgba(255, 240, 180, 0.3) 220deg, transparent 260deg);
-  mix-blend-mode: soft-light;
-  animation: fx-spin 8s linear infinite;
-}
-
-/* Scintille che compaiono attorno alle leggendarie. */
-.card-sparkles {
-  position: absolute;
-  inset: -14px;
-  pointer-events: none;
-  z-index: 4;
-}
-
-.card-sparkles i {
-  position: absolute;
-  width: 16px;
-  height: 16px;
-  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath d='M10 0 L12.2 7.8 L20 10 L12.2 12.2 L10 20 L7.8 12.2 L0 10 L7.8 7.8 Z' fill='%23ffe07a'/%3E%3C/svg%3E") center / contain no-repeat;
-  filter: drop-shadow(0 0 4px rgba(255, 210, 80, 0.9));
-  opacity: 0;
-  animation: fx-sparkle 2.6s ease-in-out infinite;
-}
-
-.card-sparkles i:nth-child(1) { top: 4%; left: 6%; animation-delay: 0s; }
-.card-sparkles i:nth-child(2) { top: 18%; right: 2%; animation-delay: 0.7s; width: 12px; height: 12px; }
-.card-sparkles i:nth-child(3) { bottom: 22%; left: 0; animation-delay: 1.3s; width: 11px; height: 11px; }
-.card-sparkles i:nth-child(4) { bottom: 5%; right: 8%; animation-delay: 1.9s; }
-.card-sparkles i:nth-child(5) { top: 48%; right: -2%; animation-delay: 2.2s; width: 9px; height: 9px; }
-
-@keyframes fx-sparkle {
-  0%, 100% { opacity: 0; transform: scale(0.3) rotate(0deg); }
-  20% { opacity: 1; transform: scale(1.1) rotate(45deg); }
-  40% { opacity: 0; transform: scale(0.4) rotate(90deg); }
-}
-
-@keyframes fx-twinkle {
-  50% { opacity: 0.35; }
-}
-
-@keyframes fx-drift {
-  to { translate: 48px 0; }
-}
-
-@keyframes fx-spin {
-  to { rotate: 360deg; }
-}
-
-.no-fx .card-fx,
-.no-fx .card-sparkles {
-  display: none;
-}
-
 /* ---------- Mirino magico ---------- */
 
 .paw-ring {
@@ -3472,44 +3282,6 @@ textarea.input {
 }
 
 .no-fx .paw-ring {
-  display: none;
-}
-
-/* ---------- Atmosfera della mappa ---------- */
-
-.map-sky {
-  position: absolute;
-  left: 0;
-  right: 0;
-  top: 0;
-  height: 22%;
-  pointer-events: none;
-  opacity: 0.4;
-  z-index: 1;
-  transition: background 2s;
-  /* sfuma dolcemente verso la mappa, senza un bordo netto */
-  -webkit-mask: linear-gradient(180deg, #000 0%, rgba(0, 0, 0, 0.6) 45%, transparent 100%);
-  mask: linear-gradient(180deg, #000 0%, rgba(0, 0, 0, 0.6) 45%, transparent 100%);
-}
-
-.map-sky.sky-day {
-  opacity: 0.22;
-}
-
-.map-sky.sky-night {
-  opacity: 0.5;
-}
-
-.map-ambient {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  pointer-events: none;
-  z-index: 1;
-}
-
-.no-fx .map-ambient {
   display: none;
 }
 
