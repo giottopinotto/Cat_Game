@@ -268,7 +268,7 @@ export function ProfileScreen() {
             interamente sul telefono: le foto non vengono mai inviate a nessuno.
           </p>
           <p className="muted" style={{ fontSize: 14, lineHeight: 1.5 }}>
-            Mappa: © OpenStreetMap contributors, stile OpenFreeMap.
+            Mappa: © OpenStreetMap contributors, stile OpenFreeMap (di riserva: tile di OpenStreetMap).
             <br />
             Riconoscimento: MediaPipe (EfficientDet-Lite0, EfficientNet-Lite0, DeepLab v3), licenza Apache 2.0.
             <br />

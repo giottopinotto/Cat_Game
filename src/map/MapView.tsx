@@ -17,19 +17,23 @@ import { useTheme } from '../ui/theme';
 // Il worker di MapLibre va impacchettato da Vite insieme alle sue dipendenze.
 maplibregl.setWorkerUrl(mapWorkerUrl);
 
+// Vecchia cache dei riquadri (conteneva anche quelli di CARTO, che ora chiede una chiave).
+if (typeof caches !== 'undefined') void caches.delete('map-tiles').catch(() => {});
+
 // Mappa gratuita: stile vettoriale OpenFreeMap (dati OpenStreetMap), senza chiavi.
 const STYLE_URL = 'https://tiles.openfreemap.org/styles/liberty';
 
-// Piano B se OpenFreeMap non risponde: tile raster di CARTO (dati OpenStreetMap).
+// Piano B se OpenFreeMap non risponde: le immagini della mappa di OpenStreetMap
+// (gratis, senza chiave; si usano solo in caso di emergenza).
 const FALLBACK_STYLE: StyleSpecification = {
   version: 8,
   sources: {
     osm: {
       type: 'raster',
-      tiles: ['https://basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png'],
+      tiles: ['https://tile.openstreetmap.org/{z}/{x}/{y}.png'],
       tileSize: 256,
       maxzoom: 19,
-      attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> © <a href="https://carto.com/attributions">CARTO</a>',
+      attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
     },
   },
   layers: [{ id: 'osm', type: 'raster', source: 'osm' }],
@@ -45,6 +49,8 @@ export const useFollow = create<{ on: boolean }>(() => ({ on: true }));
 /** Accesso alla mappa dal resto dell'app (centratura, riconoscimento parchi). */
 export const mapApi = {
   map: null as maplibregl.Map | null,
+  /** Lo stile della mappa è pronto (isStyleLoaded() resta falso finché si caricano i riquadri). */
+  ready: false,
   setFollow(on: boolean) {
     useFollow.setState({ on });
   },
@@ -55,7 +61,7 @@ export const mapApi = {
   /** True se il punto cade dentro un parco o un giardino disegnato sulla mappa. */
   isInPark(lng: number, lat: number): boolean {
     const map = this.map;
-    if (!map || !map.isStyleLoaded()) return false;
+    if (!map || !this.ready) return false;
     try {
       const p = map.project([lng, lat]);
       const c = map.getCanvas();
@@ -296,17 +302,21 @@ export function MapView() {
     mapRef.current = map;
     mapApi.map = map;
 
+    // Si passa al piano B solo se lo stile principale non arriva proprio: un singolo
+    // riquadro lento o non scaricato non deve cambiare mappa.
     let fallback = false;
     const useFallback = () => {
-      if (fallback || map.isStyleLoaded()) return;
+      if (fallback || mapApi.ready) return;
       fallback = true;
       map.setStyle(FALLBACK_STYLE);
     };
-    const timer = setTimeout(useFallback, 10000);
+    const timer = setTimeout(useFallback, 15000);
     map.on('error', (e) => {
-      if (!map.isStyleLoaded() && /style|Failed to fetch|NetworkError/i.test(String(e.error?.message ?? ''))) useFallback();
+      if (!mapApi.ready && /style|Failed to fetch|NetworkError/i.test(String(e.error?.message ?? ''))) useFallback();
     });
     map.on('style.load', () => {
+      mapApi.ready = true;
+      clearTimeout(timer);
       applyGameStyle(map, useTheme.getState().dark);
       addGameLayers(map);
       setStyleReady((n) => n + 1);
@@ -319,6 +329,7 @@ export function MapView() {
       map.remove();
       mapRef.current = null;
       mapApi.map = null;
+      mapApi.ready = false;
       // I segnaposto appartenevano alla mappa appena distrutta.
       playerRef.current = null;
       markers.current.clear();
@@ -356,7 +367,7 @@ export function MapView() {
   const dark = useTheme((s) => s.dark);
   useEffect(() => {
     const map = mapRef.current;
-    if (map?.isStyleLoaded()) applyGameStyle(map, dark);
+    if (map && mapApi.ready) applyGameStyle(map, dark);
   }, [dark, styleReady]);
 
   // Zone esplorate.

@@ -4,7 +4,7 @@ import { VitePWA } from 'vite-plugin-pwa';
 import type { Plugin } from 'vite';
 
 // Server esterni che l'app può contattare: solo quelli della mappa.
-const MAP_HOSTS = 'https://tiles.openfreemap.org https://basemaps.cartocdn.com';
+const MAP_HOSTS = 'https://tiles.openfreemap.org https://tile.openstreetmap.org';
 
 /**
  * Content Security Policy (solo nella versione pubblicata): il browser rifiuta
@@ -81,10 +81,10 @@ export default defineConfig({
           },
           {
             // Stile, tile vettoriali, font e icone della mappa (OpenFreeMap).
-            urlPattern: ({ url }) => url.hostname === 'tiles.openfreemap.org' || url.hostname === 'basemaps.cartocdn.com',
+            urlPattern: ({ url }) => url.hostname === 'tiles.openfreemap.org' || url.hostname === 'tile.openstreetmap.org',
             handler: 'StaleWhileRevalidate',
             options: {
-              cacheName: 'map-tiles',
+              cacheName: 'map-tiles-v2',
               expiration: { maxEntries: 4000, maxAgeSeconds: 60 * 60 * 24 * 30 },
               cacheableResponse: { statuses: [0, 200] },
             },
