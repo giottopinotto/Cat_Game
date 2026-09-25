@@ -71,7 +71,7 @@ export function Onboarding() {
           <p className="lead">Scegli il tuo nome da esploratore e un avatar.</p>
           <label className="field">
             <span>Nome</span>
-            <input className="input" value={name} maxLength={20} placeholder="Es. Luna" onChange={(e) => setName(e.target.value)} />
+            <input className="input" value={name} maxLength={20} placeholder="Es. Luce" onChange={(e) => setName(e.target.value)} />
           </label>
           <div className="field">
             <span>Avatar</span>
