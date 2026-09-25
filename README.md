@@ -28,7 +28,8 @@ e i dati restano sul telefono.
 - 💾 **Backup** su file e ripristino (utile se cambi telefono), **condivisione** della carta come
   immagine.
 - 📍 **Posizione solo per le foto** (attiva di base): il GPS si accende solo nella fotocamera e si spegne
-  uscendo, quindi i tuoi spostamenti non vengono seguiti. Si può disattivare dal profilo per contare km e zone.
+  uscendo, quindi i tuoi spostamenti non vengono seguiti, e la mappa non mostra animali né zone. Attivando il
+  GPS dal profilo si vedono animali e zone e contano km e zone esplorate.
 - 🏠 **Zona privata di casa**: vicino a casa le catture non salvano la posizione precisa, solo una zona
   con il centro spostato a caso. Anche le zone esplorate lì non vengono segnate.
 - 🤝 **Amici senza server**: ci si aggiunge di persona con un QR code; poi gli aggiornamenti (livello,
@@ -39,7 +40,8 @@ e i dati restano sul telefono.
 - 📅 **Diario** delle uscite: calendario con animali visti e km fatti ogni giorno.
 - ✨ **Grafica**: carte con effetti per rarità (onde, stelle, brillantini d'oro), mirino a zampette,
   mappa con stagioni, ora del giorno ed eventi (foglie, neve, lucciole, pipistrelli ad Halloween),
-  album a figurine, fuochi d'artificio a zampetta, cornici e sfondi da sbloccare con i livelli e
+  album a figurine, fuochi d'artificio a zampetta, **un premio per ogni livello** (33 avatar, cornici,
+  sfondi e pacchetti delle carte) e
   **8 colori a scelta** (lilla di base). Gli effetti si spengono dal profilo o con "riduci animazioni".
 - 🌙 **Tema scuro** la sera (o sempre), **suoni** e vibrazioni disattivabili, **promemoria del backup**.
 - 📱 **Installabile** sulla schermata Home (Android e iPhone). Dopo il primo utilizzo si può catturare

@@ -8,6 +8,7 @@ import { AlbumScreen } from './screens/AlbumScreen';
 import { AnimalScreen } from './screens/AnimalScreen';
 import { CollectionScreen } from './screens/CollectionScreen';
 import { DiaryScreen } from './screens/DiaryScreen';
+import { RewardsScreen } from './screens/RewardsScreen';
 import { FriendLink, FriendsScreen } from './screens/FriendsScreen';
 import { Onboarding } from './screens/Onboarding';
 import { ProfileScreen } from './screens/ProfileScreen';
@@ -66,9 +67,9 @@ export function App() {
   }
   if (!onboarded) return <Onboarding />;
 
-  const known = TABS.includes(page) || ['animale', 'cattura', 'diario', 'amici', 'amico'].includes(page);
+  const known = TABS.includes(page) || ['animale', 'cattura', 'diario', 'amici', 'amico', 'premi'].includes(page);
   const route = known ? page : '';
-  const tab = route === 'animale' ? 'collezione' : route === 'diario' || route === 'amici' ? 'profilo' : route;
+  const tab = route === 'animale' ? 'collezione' : route === 'diario' || route === 'amici' || route === 'premi' ? 'profilo' : route;
 
   return (
     <>
@@ -78,6 +79,7 @@ export function App() {
       {route === 'album' && <AlbumScreen entryId={param} key={param ? 'entry' : 'list'} />}
       {route === 'profilo' && <ProfileScreen />}
       {route === 'diario' && <DiaryScreen />}
+      {route === 'premi' && <RewardsScreen />}
       {route === 'amici' && <FriendsScreen id={param} key={param ?? 'list'} />}
       {route === 'amico' && param && <FriendLink token={param} key={param} />}
       {route === 'animale' && param && <AnimalScreen id={param} />}
@@ -86,7 +88,7 @@ export function App() {
           <CaptureScreen />
         </Suspense>
       )}
-      {(TABS.includes(route) || route === 'diario' || route === 'amici') && <BottomNav active={tab} dots={albumNew && route !== 'album' ? ['album'] : []} />}
+      {(TABS.includes(route) || route === 'diario' || route === 'amici' || route === 'premi') && <BottomNav active={tab} dots={albumNew && route !== 'album' ? ['album'] : []} />}
       <Toasts />
       {route !== 'cattura' && <Celebrations />}
     </>

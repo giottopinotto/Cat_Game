@@ -1,4 +1,7 @@
-export { AVATAR_IDS as AVATARS } from './avatars';
+import { AVATAR_LIST } from './cosmetics';
+
+/** Avatar disponibili fin da subito (gli altri si sbloccano con i livelli). */
+export const AVATARS = AVATAR_LIST.filter((a) => a.level === 1).map((a) => a.id);
 import { IconBubble } from './icons';
 
 export const RULES = [

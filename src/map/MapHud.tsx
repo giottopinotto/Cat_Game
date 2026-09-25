@@ -9,7 +9,7 @@ import { useGame } from '../game/store';
 import { go } from '../router';
 import { activeEvents } from '../game/events';
 import { backupDue, saveBackup } from '../ui/backupActions';
-import { XpBar } from '../ui/common';
+import { Sheet, XpBar } from '../ui/common';
 import { AvatarArt, GameIcon, IconBubble } from '../ui/icons';
 import { MissionsSheet } from './MissionsSheet';
 import { recenter, useFollow } from './MapView';
@@ -21,6 +21,8 @@ export function MapHud() {
   const animals = useGame((s) => s.animals);
   const { status, fix, error } = useLocation();
   const gpsOnlyPhoto = useGame((s) => s.player.settings.gpsOnlyPhoto);
+  const updateSettings = useGame((s) => s.updateSettings);
+  const [gpsInfo, setGpsInfo] = useState(false);
   const follow = useFollow((s) => s.on);
   const [showMissions, setShowMissions] = useState(false);
   const [dismissed, setDismissed] = useState<string[]>([]);
@@ -120,9 +122,9 @@ export function MapHud() {
       {nearby && <NearbyHint {...nearby} onClose={() => setDismissed((d) => [...d, nearby.id])} />}
 
       {gpsOnlyPhoto && !showBackup && (
-        <div className="gps-off-chip" role="status">
-          <GameIcon name="lock" size={15} /> Posizione solo per le foto
-        </div>
+        <button className="gps-off-chip" onClick={() => setGpsInfo(true)}>
+          <GameIcon name="lock" size={15} /> GPS spento: animali e zone nascosti
+        </button>
       )}
 
       {!gpsOnlyPhoto && <div className="hud-side">
@@ -136,6 +138,30 @@ export function MapHud() {
       </div>}
 
       {showMissions && <MissionsSheet onClose={() => setShowMissions(false)} />}
+      {gpsInfo && (
+        <Sheet onClose={() => setGpsInfo(false)}>
+          <div className="row" style={{ gap: 12, marginBottom: 8 }}>
+            <IconBubble name="lock" tone="mint" />
+            <h2>Posizione solo per le foto</h2>
+          </div>
+          <p className="muted" style={{ lineHeight: 1.45, marginBottom: 16 }}>
+            Il GPS si accende solo quando fotografi e la mappa non mostra niente di tuo: né gli animali trovati né le zone
+            esplorate. Se attivi il GPS li vedi sulla mappa e contano anche i km e le zone.
+          </p>
+          <button
+            className="btn btn-primary btn-block"
+            onClick={() => {
+              updateSettings({ gpsOnlyPhoto: false });
+              setGpsInfo(false);
+            }}
+          >
+            Attiva il GPS
+          </button>
+          <button className="btn btn-ghost btn-block" style={{ marginTop: 8 }} onClick={() => setGpsInfo(false)}>
+            Lascialo spento
+          </button>
+        </Sheet>
+      )}
     </>
   );
 }

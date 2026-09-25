@@ -144,13 +144,21 @@ describe('backup con i nuovi dati', () => {
 describe('grafica: colori e cornici', () => {
   it('colori e cornici accettano solo valori conosciuti e sbloccati', async () => {
     const { ACCENT_IDS, getAccent } = await import('../ui/accents');
-    const { pickCosmetic, FRAMES, BANNERS, unlockedAt } = await import('../ui/cosmetics');
+    const { pickCosmetic, pickAvatar, FRAMES, BANNERS, LEVEL_REWARDS, rewardAt } = await import('../ui/cosmetics');
     expect(ACCENT_IDS).toContain('lilla');
     expect(getAccent('non-esiste').id).toBe('lilla');
-    expect(pickCosmetic(FRAMES, 'corona', 39)).toBe('base');
-    expect(pickCosmetic(FRAMES, 'corona', 40)).toBe('corona');
+    expect(pickCosmetic(FRAMES, 'corona', 48)).toBe('base');
+    expect(pickCosmetic(FRAMES, 'corona', 49)).toBe('corona');
     expect(pickCosmetic(BANNERS, '__proto__', 50)).toBe('nessuno');
-    expect(unlockedAt(5).map((u) => u.item.id)).toEqual(['stelle']);
+    expect(pickAvatar('drago', 47, 'gatto-rosso')).toBe('gatto-rosso');
+    expect(pickAvatar('drago', 48, 'gatto-rosso')).toBe('drago');
+    expect(pickAvatar('<script>', 50, 'gatto-rosso')).toBe('gatto-rosso');
+    // Un premio per ogni livello dal 2 al 50, tutti diversi e disegnati.
+    expect(LEVEL_REWARDS.map((r) => r.level)).toEqual(Array.from({ length: 49 }, (_, i) => i + 2));
+    expect(new Set(LEVEL_REWARDS.map((r) => `${r.kind}:${r.id}`)).size).toBe(49);
+    expect(rewardAt(50)?.id).toBe('gatto-re');
+    const { AVATAR_IDS } = await import('../ui/avatars');
+    for (const r of LEVEL_REWARDS.filter((x) => x.kind === 'avatar')) expect(AVATAR_IDS).toContain(r.id);
   });
 
   it('lo store non permette cornici bloccate', async () => {
@@ -162,5 +170,19 @@ describe('grafica: colori e cornici', () => {
     expect(useGame.getState().player.frame).toBe('base');
     // Livello 1: il prato si sblocca al livello 2.
     expect(useGame.getState().player.banner).toBe('nessuno');
+  });
+});
+
+describe('premi disegnati', () => {
+  it('ogni cornice, sfondo e pacchetto del percorso ha il suo stile', async () => {
+    // Lettura diretta del file (Vitest svuota gli import dei fogli di stile).
+    const fs = (await import(/* @vite-ignore */ `node:${'fs'}`)) as { readFileSync(p: URL, e: string): string };
+    const css = fs.readFileSync(new URL('../styles.css', import.meta.url), 'utf8');
+    const { LEVEL_REWARDS } = await import('../ui/cosmetics');
+    const prefix = { cornice: '.frame-', sfondo: '.banner-', pacchetto: '.pack.skin-' } as const;
+    for (const r of LEVEL_REWARDS) {
+      if (r.kind === 'avatar') continue;
+      expect(css, `${r.kind} ${r.id}`).toContain(`${prefix[r.kind]}${r.id} {`);
+    }
   });
 });

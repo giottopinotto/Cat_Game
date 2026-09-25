@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { DEFAULT_AVATAR } from '../ui/avatars';
-import { BANNERS, DEFAULT_BANNER, DEFAULT_FRAME, FRAMES, pickCosmetic } from '../ui/cosmetics';
+import { BANNERS, DEFAULT_BANNER, DEFAULT_FRAME, DEFAULT_PACK, FRAMES, PACKS, pickAvatar, pickCosmetic } from '../ui/cosmetics';
 import { getEntry } from '../data/entries';
 import { RARITIES, RARITY_INFO, rarityIndex, type Animal, type Encounter, type Rarity, type Species } from '../data/types';
 import { BADGES, badgeTier, TIER_NAMES, TIER_XP, type BadgeDef } from './badges';
@@ -78,6 +78,8 @@ export interface PlayerData {
   /** Cornice dell'avatar e sfondo del profilo (vedi ui/cosmetics.ts). */
   frame: string;
   banner: string;
+  /** Aspetto del pacchetto che contiene le carte nuove. */
+  pack: string;
   /** Voci dell'album già viste nell'album (le nuove si "incollano" con un'animazione). */
   albumSeen: string[];
   /** Amici aggiunti di persona, con l'ultimo profilo ricevuto. */
@@ -124,7 +126,7 @@ export interface Toast {
   text: string;
 }
 
-export type Celebration = { kind: 'level'; level: number } | { kind: 'badge'; badge: BadgeDef; tier: number };
+export type Celebration = { kind: 'level'; level: number; from: number } | { kind: 'badge'; badge: BadgeDef; tier: number };
 
 interface GameState {
   ready: boolean;
@@ -134,7 +136,7 @@ interface GameState {
   celebrations: Celebration[];
   init(): Promise<void>;
   finishOnboarding(name: string, avatar: string): void;
-  updateProfile(name: string, avatar: string, frame?: string, banner?: string): void;
+  updateProfile(name: string, avatar: string, frame?: string, banner?: string, pack?: string): void;
   /** Segna come già viste nell'album queste voci. */
   markAlbumSeen(ids: string[]): void;
   ensureToday(): void;
@@ -208,6 +210,7 @@ export function defaultPlayer(): PlayerData {
     backupNagAt: 0,
     dailyWalk: {},
     frame: DEFAULT_FRAME,
+    pack: DEFAULT_PACK,
     banner: DEFAULT_BANNER,
     albumSeen: [],
     friends: [],
@@ -281,7 +284,7 @@ function withBadges(p: PlayerData, animals: Animal[]) {
 function levelUps(xpBefore: number, xpAfter: number): Celebration[] {
   const a = levelInfo(xpBefore).level;
   const b = levelInfo(xpAfter).level;
-  return b > a ? [{ kind: 'level', level: b }] : [];
+  return b > a ? [{ kind: 'level', level: b, from: a }] : [];
 }
 
 const sumXp = (r: Reward[]) => r.reduce((s, x) => s + x.xp, 0);
@@ -388,6 +391,12 @@ export const useGame = create<GameState>((set, get) => {
       const [animals, stored] = await Promise.all([loadAnimals(), kvGet<PlayerData>('player')]);
       animals.sort((a, b) => b.createdAt - a.createdAt);
       const player = normalizePlayer(stored);
+      // Premi cambiati tra una versione e l'altra: si tiene solo ciò che è sbloccato al livello attuale.
+      const level = levelInfo(player.xp).level;
+      player.frame = pickCosmetic(FRAMES, player.frame, level);
+      player.banner = pickCosmetic(BANNERS, player.banner, level);
+      player.pack = pickCosmetic(PACKS, player.pack, level);
+      player.avatar = pickAvatar(player.avatar, level, DEFAULT_AVATAR);
       if (player.settings.gpsOnlyPhoto) player.missions = { ...player.missions, list: withoutMoveMissions(player.missions.list) };
       set({ animals, player, ready: true });
       get().ensureToday();
@@ -399,16 +408,17 @@ export const useGame = create<GameState>((set, get) => {
       persistPlayer();
     },
 
-    updateProfile(name, avatar, frame, banner) {
+    updateProfile(name, avatar, frame, banner, pack) {
       set((s) => {
         const level = levelInfo(s.player.xp).level;
         return {
           player: {
             ...s.player,
             name,
-            avatar,
+            avatar: pickAvatar(avatar, level, s.player.avatar),
             frame: frame === undefined ? s.player.frame : pickCosmetic(FRAMES, frame, level),
             banner: banner === undefined ? s.player.banner : pickCosmetic(BANNERS, banner, level),
+            pack: pack === undefined ? s.player.pack : pickCosmetic(PACKS, pack, level),
           },
         };
       });

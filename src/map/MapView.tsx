@@ -320,6 +320,7 @@ export function MapView({ active = true }: { active?: boolean }) {
   const zones = useGame((s) => s.player.zones);
   const avatar = useGame((s) => s.player.avatar);
   const home = useGame((s) => s.player.home);
+  const gpsOnlyPhoto = useGame((s) => s.player.settings.gpsOnlyPhoto);
   const homeMarker = useRef<maplibregl.Marker | null>(null);
 
   // Creazione della mappa (una volta sola).
@@ -385,13 +386,13 @@ export function MapView({ active = true }: { active?: boolean }) {
     playerRef.current?.marker.remove();
     playerRef.current = null;
     (map.getSource('accuracy') as GeoJSONSource | undefined)?.setData(EMPTY);
-    if (centered.current) return;
+    if (centered.current || gpsOnlyPhoto) return;
     const last = [...animals].sort((a, b) => b.encounters[b.encounters.length - 1].at - a.encounters[a.encounters.length - 1].at)[0];
     if (!last) return;
     centered.current = true;
     const [lng, lat] = lastSeen(last);
     map.jumpTo({ center: [lng, lat], zoom: 15.5, pitch: 40 });
-  }, [fix, animals, styleReady]);
+  }, [fix, animals, styleReady, gpsOnlyPhoto]);
 
   // Segnaposto del giocatore e cerchio di precisione.
   useEffect(() => {
@@ -445,36 +446,54 @@ export function MapView({ active = true }: { active?: boolean }) {
     }
   }, [dark, accent, skyPhase, styleReady]);
 
+  // Con la posizione solo per le foto la mappa non mostra niente di personale:
+  // zone esplorate, animali e zona di casa compaiono solo con il GPS attivo.
+  const showMine = !gpsOnlyPhoto;
+
   // Zone esplorate.
   useEffect(() => {
-    (mapRef.current?.getSource('zones') as GeoJSONSource | undefined)?.setData(zonesGeoJSON(zones));
-  }, [zones, styleReady]);
+    (mapRef.current?.getSource('zones') as GeoJSONSource | undefined)?.setData(showMine ? zonesGeoJSON(zones) : EMPTY);
+  }, [zones, showMine, styleReady]);
 
-  // Zona privata di casa: cerchio e un segnaposto con il numero di animali "di casa".
-  const homeCount = animals.filter((a) => a.encounters[a.encounters.length - 1].priv).length;
+  // Zona privata di casa: cerchio e casetta al centro (gli animali di casa le stanno attorno).
   useEffect(() => {
     const map = mapRef.current;
-    (map?.getSource('home') as GeoJSONSource | undefined)?.setData(home ? circle(home.lng, home.lat, home.r) : EMPTY);
+    const visible = showMine && home;
+    (map?.getSource('home') as GeoJSONSource | undefined)?.setData(visible ? circle(home.lng, home.lat, home.r) : EMPTY);
     homeMarker.current?.remove();
     homeMarker.current = null;
-    if (map && home) homeMarker.current = new maplibregl.Marker({ element: homeMarkerEl(homeCount) }).setLngLat([home.lng, home.lat]).addTo(map);
-  }, [home, homeCount, styleReady]);
+    if (map && visible) homeMarker.current = new maplibregl.Marker({ element: homeMarkerEl(0) }).setLngLat([home.lng, home.lat]).addTo(map);
+  }, [home, showMine, styleReady]);
 
-  // Animali catturati sulla mappa, nel punto dell'ultimo incontro (quelli di casa no).
+  // Animali catturati sulla mappa, nel punto dell'ultimo incontro. Quelli trovati vicino a
+  // casa hanno tutti lo stesso punto (quello approssimato della zona): si dispongono in cerchio.
   useEffect(() => {
     const map = mapRef.current;
     if (!map) return;
     const current = markers.current;
     const seen = new Set<string>();
-    for (const a of animals) {
-      if (a.encounters[a.encounters.length - 1].priv) continue;
-      seen.add(a.id);
-      const key = `${a.coverPhotoId}|${a.rarity}|${a.encounters.length}`;
-      const existing = current.get(a.id);
-      if (existing?.key === key) continue;
-      existing?.marker.remove();
-      const marker = new maplibregl.Marker({ element: animalMarkerEl(a), anchor: 'bottom' }).setLngLat(lastSeen(a)).addTo(map);
-      current.set(a.id, { marker, key });
+    const list = showMine ? animals : [];
+    const groups = new Map<string, Animal[]>();
+    for (const a of list) {
+      const [lng, lat] = lastSeen(a);
+      const k = `${lng.toFixed(5)},${lat.toFixed(5)}`;
+      groups.set(k, [...(groups.get(k) ?? []), a]);
+    }
+    for (const group of groups.values()) {
+      group.forEach((a, i) => {
+        seen.add(a.id);
+        const n = group.length;
+        // In cerchio attorno al punto (e alla casetta, se c'è), partendo da sinistra.
+        const ring = n > 1 ? 44 + Math.min(40, n * 4) : 0;
+        const angle = (i / n) * Math.PI * 2 + Math.PI;
+        const offset: [number, number] = [Math.round(Math.cos(angle) * ring), Math.round(Math.sin(angle) * ring)];
+        const key = `${a.coverPhotoId}|${a.rarity}|${a.encounters.length}|${offset.join(',')}`;
+        const existing = current.get(a.id);
+        if (existing?.key === key) return;
+        existing?.marker.remove();
+        const marker = new maplibregl.Marker({ element: animalMarkerEl(a), anchor: 'bottom', offset }).setLngLat(lastSeen(a)).addTo(map);
+        current.set(a.id, { marker, key });
+      });
     }
     for (const [id, m] of current) {
       if (!seen.has(id)) {
@@ -482,7 +501,7 @@ export function MapView({ active = true }: { active?: boolean }) {
         current.delete(id);
       }
     }
-  }, [animals]);
+  }, [animals, showMine]);
 
   return (
     <div className="map-wrap">

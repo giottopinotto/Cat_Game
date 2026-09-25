@@ -26,7 +26,8 @@ export function season(d = new Date()): 'spring' | 'summer' | 'autumn' | 'winter
 export function particlesFor(d = new Date()): Particle[] {
   const night = dayPhase(d) === 'night';
   const ids = activeEvents(d).map((e) => e.id);
-  if (ids.includes('halloween') || ids.includes('gatto-nero')) return ['bat', 'leaf'];
+  const dusk = night || dayPhase(d) === 'sunset';
+  if (ids.includes('halloween') || ids.includes('gatto-nero')) return dusk ? ['bat', 'leaf'] : ['leaf'];
   if (ids.includes('natale')) return ['snow', 'star'];
   if (ids.some((id) => ['animali', 'gatto', 'cane'].includes(id))) return ['paw'];
   switch (season(d)) {

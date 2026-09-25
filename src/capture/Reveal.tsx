@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState, type CSSProperties } from 'react';
 import { getEntry } from '../data/entries';
 import { RARITY_INFO, rarityIndex } from '../data/types';
 import { FRIEND_NAMES, levelInfo } from '../game/progress';
-import type { CaptureOutcome } from '../game/store';
+import { useGame, type CaptureOutcome } from '../game/store';
 import { go } from '../router';
 import { AnimalCard } from '../ui/AnimalCard';
 import { formatNumber, Logo, rarityStyle, vibrate, XpBar } from '../ui/common';
@@ -47,6 +47,7 @@ export function Reveal({ outcome, cardUrl, onAgain }: { outcome: CaptureOutcome;
   // Le nuove catture arrivano "incartate": la carta si apre dopo un attimo o con un tocco.
   const [opened, setOpened] = useState(!isNew);
   const total = outcome.rewards.reduce((s, x) => s + x.xp, 0);
+  const packSkin = useGame((s) => s.player.pack);
 
   useEffect(() => {
     if (opened) return;
@@ -79,7 +80,7 @@ export function Reveal({ outcome, cardUrl, onAgain }: { outcome: CaptureOutcome;
       <div className="reveal" style={rarityStyle(animal.rarity)}>
         <div className="pack-stage">
           <div className="pack-rays" aria-hidden />
-          <button className={`pack r-${animal.rarity}`} onClick={() => setOpened(true)} aria-label="Apri la carta">
+          <button className={`pack r-${animal.rarity} skin-${packSkin}`} onClick={() => setOpened(true)} aria-label="Apri la carta">
             <Logo size={120} className="logo" />
           </button>
         </div>

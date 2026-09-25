@@ -1,7 +1,8 @@
 import { CalendarDays, Download, House, Check, Info, Lock, MapPinOff, Moon, Palette, Sparkles, Pencil, ShieldCheck, Smartphone, Trash2, Upload, Users, Vibrate, Volume2 } from 'lucide-react';
 import { useMemo, useRef, useState, type CSSProperties } from 'react';
 import { ACCENTS, accentColor, getAccent } from '../ui/accents';
-import { BANNERS, FRAMES } from '../ui/cosmetics';
+import { AVATAR_LIST, BANNERS, FRAMES, nextReward, PACKS } from '../ui/cosmetics';
+import { RewardPreview } from '../ui/RewardPreview';
 import { BADGES, badgeTier, TIER_NAMES, tierText, type BadgeSummary } from '../game/badges';
 import { importBackup } from '../game/backup';
 import { wipeAll } from '../game/db';
@@ -15,7 +16,7 @@ import { badgeSummary, streaks } from '../game/summary';
 import { isIOS, isStandalone, promptInstall, useInstall } from '../pwa';
 import { formatNumber, Sheet, Switch, XpBar } from '../ui/common';
 import { AvatarArt, GameIcon, Medal } from '../ui/icons';
-import { AVATARS, Rules } from '../ui/Rules';
+import { Rules } from '../ui/Rules';
 
 type Open = null | 'edit' | 'rules' | 'about' | 'wipe' | 'install' | 'home' | { badge: string };
 
@@ -33,6 +34,7 @@ export function ProfileScreen() {
   const [open, setOpen] = useState<Open>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const lvl = levelInfo(player.xp);
+  const next = nextReward(lvl.level);
   const day = today();
   const summary = useMemo(
     () => badgeSummary(animals, player.zones.length, player.walkedM, player.activeDays, day),
@@ -84,6 +86,20 @@ export function ProfileScreen() {
             </span>
           </div>
         </div>
+        <button className="next-reward" onClick={() => go('premi')}>
+          {next ? (
+            <>
+              <RewardPreview reward={next} size={38} />
+              <span className="grow" style={{ textAlign: 'left' }}>
+                <span style={{ fontSize: 12, opacity: 0.8 }}>Prossimo premio · livello {next.level}</span>
+                <b style={{ display: 'block' }}>{next.name}</b>
+              </span>
+            </>
+          ) : (
+            <span className="grow">Hai sbloccato tutti i premi!</span>
+          )}
+          <span className="see">Premi ›</span>
+        </button>
       </div>
 
       <div className="section-title">
@@ -409,6 +425,7 @@ function EditProfile({ onClose }: { onClose: () => void }) {
   const [avatar, setAvatar] = useState(player.avatar);
   const [frame, setFrame] = useState(player.frame);
   const [banner, setBanner] = useState(player.banner);
+  const [pack, setPack] = useState(player.pack);
   const level = levelInfo(player.xp).level;
   return (
     <Sheet onClose={onClose}>
@@ -420,9 +437,20 @@ function EditProfile({ onClose }: { onClose: () => void }) {
       <div className="field">
         <span>Avatar</span>
         <div className="avatars">
-          {AVATARS.map((a) => (
-            <button key={a} className={avatar === a ? 'active' : ''} onClick={() => setAvatar(a)}>
-              <AvatarArt id={a} />
+          {AVATAR_LIST.map((a) => (
+            <button
+              key={a.id}
+              className={`${avatar === a.id ? 'active' : ''} ${a.level > level ? 'locked' : ''}`}
+              disabled={a.level > level}
+              onClick={() => setAvatar(a.id)}
+              aria-label={a.level > level ? `Si sblocca al livello ${a.level}` : undefined}
+            >
+              <AvatarArt id={a.id} />
+              {a.level > level && (
+                <span className="lock-badge">
+                  <Lock size={10} /> {a.level}
+                </span>
+              )}
             </button>
           ))}
         </div>
@@ -461,12 +489,28 @@ function EditProfile({ onClose }: { onClose: () => void }) {
           ))}
         </div>
       </div>
+      <div className="field">
+        <span>Pacchetto delle carte</span>
+        <div className="cosmetic-grid">
+          {PACKS.map((k) => (
+            <button key={k.id} className={pack === k.id ? 'active' : ''} disabled={k.level > level} onClick={() => setPack(k.id)}>
+              {k.level > level && (
+                <span className="lock">
+                  <Lock size={11} /> Liv. {k.level}
+                </span>
+              )}
+              <RewardPreview reward={{ kind: 'pacchetto', id: k.id }} size={52} />
+              {k.name}
+            </button>
+          ))}
+        </div>
+      </div>
       <button
         className="btn btn-primary btn-block"
         style={{ marginTop: 18 }}
         disabled={!name.trim()}
         onClick={() => {
-          updateProfile(name.trim(), avatar, frame, banner);
+          updateProfile(name.trim(), avatar, frame, banner, pack);
           onClose();
         }}
       >

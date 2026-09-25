@@ -1,9 +1,8 @@
 import { getEntry } from '../data/entries';
 import { RARITIES, type Animal, type Encounter, type Rarity, type Stats } from '../data/types';
 import { getAllPhotos, loadAnimals, kvGet, replaceAll, type PhotoRecord } from './db';
-import { AVATAR_IDS } from '../ui/avatars';
 import { ACCENT_IDS } from '../ui/accents';
-import { BANNERS, FRAMES, pickCosmetic } from '../ui/cosmetics';
+import { BANNERS, FRAMES, PACKS, pickAvatar, pickCosmetic } from '../ui/cosmetics';
 import { levelInfo } from './progress';
 import { forgetPhotos } from './photos';
 import { cleanFriend, MAX_FRIENDS, type Friend } from './friends';
@@ -110,7 +109,7 @@ function cleanPlayer(p: unknown): PlayerData {
   return {
     ...base,
     name: text(x.name, 'Esploratore').trim() || 'Esploratore',
-    avatar: AVATAR_IDS.includes(x.avatar as string) ? (x.avatar as string) : base.avatar,
+    avatar: pickAvatar(x.avatar, levelInfo(clamp(x.xp, 0, 1e9, 0)).level, base.avatar),
     xp: clamp(x.xp, 0, 1e9, 0),
     createdAt: clamp(x.createdAt, 0, Date.now() + 86400000, base.createdAt),
     onboarded: true,
@@ -142,6 +141,7 @@ function cleanPlayer(p: unknown): PlayerData {
     ),
     frame: pickCosmetic(FRAMES, x.frame, levelInfo(clamp(x.xp, 0, 1e9, 0)).level),
     banner: pickCosmetic(BANNERS, x.banner, levelInfo(clamp(x.xp, 0, 1e9, 0)).level),
+    pack: pickCosmetic(PACKS, x.pack, levelInfo(clamp(x.xp, 0, 1e9, 0)).level),
     albumSeen: (Array.isArray(x.albumSeen) ? x.albumSeen : []).filter((id): id is string => typeof id === 'string' && !!getEntry(id)).slice(0, 1000),
     friends: (Array.isArray(x.friends) ? x.friends : [])
       .slice(0, MAX_FRIENDS)

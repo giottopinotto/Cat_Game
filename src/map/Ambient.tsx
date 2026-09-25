@@ -19,7 +19,7 @@ interface P {
 
 const LEAF = ['#e8913a', '#d9632b', '#f2c14e', '#b5542c', '#c97b2e'];
 const PETAL = ['#ffc2d9', '#ffd6e6', '#fff0f6', '#ffb0cc'];
-const COUNT: Record<Particle, number> = { leaf: 16, snow: 34, petal: 18, seed: 12, firefly: 16, paw: 14, bat: 5, star: 10 };
+const COUNT: Record<Particle, number> = { leaf: 9, snow: 24, petal: 11, seed: 7, firefly: 12, paw: 7, bat: 3, star: 7 };
 
 const reducedMotion = () => typeof matchMedia !== 'undefined' && matchMedia('(prefers-reduced-motion: reduce)').matches;
 
@@ -28,19 +28,19 @@ function spawn(kind: Particle, w: number, h: number, accent: string, anywhere: b
   const base: P = { kind, x: r() * w, y: anywhere ? r() * h : -20, vx: 0, vy: 0, size: 6, rot: r() * Math.PI * 2, vr: 0, phase: r() * 10, color: '#fff' };
   switch (kind) {
     case 'leaf':
-      return { ...base, size: 7 + r() * 6, vy: 28 + r() * 22, vx: -10 + r() * 20, vr: -1.5 + r() * 3, color: LEAF[Math.floor(r() * LEAF.length)] };
+      return { ...base, size: 6 + r() * 4, vy: 16 + r() * 14, vx: -6 + r() * 12, vr: -1 + r() * 2, color: LEAF[Math.floor(r() * LEAF.length)] };
     case 'snow':
-      return { ...base, size: 1.4 + r() * 2.8, vy: 22 + r() * 30, vx: -6 + r() * 12 };
+      return { ...base, size: 1.2 + r() * 2.2, vy: 14 + r() * 20, vx: -4 + r() * 8 };
     case 'petal':
-      return { ...base, size: 4 + r() * 4, vy: 20 + r() * 18, vx: 8 + r() * 14, vr: -2 + r() * 4, color: PETAL[Math.floor(r() * PETAL.length)] };
+      return { ...base, size: 3.5 + r() * 3, vy: 14 + r() * 12, vx: 6 + r() * 10, vr: -1.5 + r() * 3, color: PETAL[Math.floor(r() * PETAL.length)] };
     case 'seed':
       return { ...base, y: anywhere ? r() * h : h + 20, size: 2 + r() * 2, vy: -(10 + r() * 12), vx: 6 + r() * 10 };
     case 'firefly':
       return { ...base, y: h * 0.25 + r() * h * 0.7, size: 2 + r() * 1.5, vx: -8 + r() * 16, vy: -8 + r() * 16, color: '#e8ff8a' };
     case 'paw':
-      return { ...base, size: 9 + r() * 7, vy: 24 + r() * 16, vx: -6 + r() * 12, vr: -0.6 + r() * 1.2, color: accent };
+      return { ...base, size: 8 + r() * 5, vy: 16 + r() * 12, vx: -4 + r() * 8, vr: -0.5 + r() * 1, color: accent };
     case 'bat':
-      return { ...base, x: anywhere ? r() * w : -30, y: h * 0.1 + r() * h * 0.45, size: 10 + r() * 6, vx: 40 + r() * 30, vy: 0, color: '#2a2440' };
+      return { ...base, x: anywhere ? r() * w : -30, y: h * 0.12 + r() * h * 0.3, size: 7 + r() * 4, vx: 28 + r() * 20, vy: 0, color: '#3a2f5a' };
     case 'star':
       return { ...base, y: r() * h * 0.45, size: 4 + r() * 5, color: '#ffe07a' };
   }
@@ -61,19 +61,24 @@ function draw(g: CanvasRenderingContext2D, p: P, t: number) {
   g.translate(p.x, p.y);
   switch (p.kind) {
     case 'leaf': {
+      // Foglia che "gira" su se stessa cadendo: si schiaccia e si allarga.
       g.rotate(p.rot);
-      g.scale(1, 0.55 + 0.45 * Math.sin(t * 2 + p.phase));
-      g.fillStyle = p.color;
+      g.scale(0.35 + 0.65 * Math.abs(Math.sin(t * 1.4 + p.phase)), 1);
+      const s = p.size;
+      const grd = g.createLinearGradient(0, -s, 0, s);
+      grd.addColorStop(0, p.color);
+      grd.addColorStop(1, 'rgba(120, 50, 10, 0.9)');
+      g.fillStyle = grd;
       g.beginPath();
-      g.moveTo(-p.size, 0);
-      g.quadraticCurveTo(0, -p.size * 0.8, p.size, 0);
-      g.quadraticCurveTo(0, p.size * 0.8, -p.size, 0);
+      g.moveTo(0, -s);
+      g.bezierCurveTo(s * 0.75, -s * 0.55, s * 0.7, s * 0.45, 0, s);
+      g.bezierCurveTo(-s * 0.7, s * 0.45, -s * 0.75, -s * 0.55, 0, -s);
       g.fill();
-      g.strokeStyle = 'rgba(90, 40, 10, 0.35)';
-      g.lineWidth = 0.8;
+      g.strokeStyle = 'rgba(255, 240, 210, 0.55)';
+      g.lineWidth = 0.7;
       g.beginPath();
-      g.moveTo(-p.size, 0);
-      g.lineTo(p.size, 0);
+      g.moveTo(0, -s * 0.8);
+      g.lineTo(0, s * 1.25);
       g.stroke();
       break;
     }
@@ -85,14 +90,21 @@ function draw(g: CanvasRenderingContext2D, p: P, t: number) {
       g.arc(0, 0, p.size, 0, Math.PI * 2);
       g.fill();
       break;
-    case 'petal':
+    case 'petal': {
+      // Petalo a cuore (come quelli del ciliegio).
       g.rotate(p.rot);
-      g.scale(1, 0.5 + 0.5 * Math.abs(Math.sin(t * 1.6 + p.phase)));
+      g.scale(1, 0.45 + 0.55 * Math.abs(Math.sin(t * 1.3 + p.phase)));
+      const s = p.size;
       g.fillStyle = p.color;
       g.beginPath();
-      g.ellipse(0, 0, p.size, p.size * 0.6, 0, 0, Math.PI * 2);
+      g.moveTo(0, s);
+      g.bezierCurveTo(s * 1.1, s * 0.2, s * 0.8, -s, s * 0.18, -s * 0.8);
+      g.lineTo(0, -s * 0.45);
+      g.lineTo(-s * 0.18, -s * 0.8);
+      g.bezierCurveTo(-s * 0.8, -s, -s * 1.1, s * 0.2, 0, s);
       g.fill();
       break;
+    }
     case 'seed':
       g.strokeStyle = 'rgba(255, 255, 255, 0.85)';
       g.lineWidth = 0.7;
@@ -121,14 +133,14 @@ function draw(g: CanvasRenderingContext2D, p: P, t: number) {
     }
     case 'paw':
       g.rotate(p.rot);
-      g.globalAlpha = 0.55;
+      g.globalAlpha *= 0.55;
       g.fillStyle = p.color;
       drawPaw(g, p.size);
       break;
     case 'bat': {
       const flap = Math.sin(t * 14 + p.phase);
       g.fillStyle = p.color;
-      g.globalAlpha = 0.8;
+      g.globalAlpha *= 0.8;
       g.beginPath();
       g.moveTo(0, 0);
       g.quadraticCurveTo(-p.size * 0.6, -p.size * (0.2 + 0.5 * flap), -p.size * 1.3, -p.size * 0.1 * flap);
@@ -140,7 +152,7 @@ function draw(g: CanvasRenderingContext2D, p: P, t: number) {
     }
     case 'star': {
       const a = 0.25 + 0.75 * Math.abs(Math.sin(t * 1.3 + p.phase));
-      g.globalAlpha = a;
+      g.globalAlpha *= a;
       g.fillStyle = p.color;
       g.shadowColor = 'rgba(255, 220, 110, 0.9)';
       g.shadowBlur = 8;
@@ -220,7 +232,11 @@ export function Ambient({ active }: { active: boolean }) {
         p.rot += p.vr * dt;
         const out = p.y > h + 30 || p.y < -40 || p.x < -60 || p.x > w + 60;
         if (out && p.kind !== 'star') ps[i] = spawn(p.kind, w, h, color, p.kind === 'firefly');
+        // Sfuma ai bordi alto e basso: niente particelle che "tagliano" i pulsanti.
+        const fade = Math.min(1, Math.max(0, ps[i].y / 60), Math.max(0, (h - ps[i].y) / 140));
+        g.globalAlpha = 0.85 * fade;
         draw(g, ps[i], t);
+        g.globalAlpha = 1;
       }
     };
     const onVis = () => {

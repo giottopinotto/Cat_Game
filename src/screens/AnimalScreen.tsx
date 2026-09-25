@@ -17,6 +17,7 @@ export function AnimalScreen({ id }: { id: string }) {
   const [rename, setRename] = useState(false);
   const [release, setRelease] = useState(false);
   const [sharing, setSharing] = useState(false);
+  const gpsOnlyPhoto = useGame((s) => s.player.settings.gpsOnlyPhoto);
 
   if (!animal) {
     return (
@@ -139,15 +140,17 @@ export function AnimalScreen({ id }: { id: string }) {
       </div>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 24 }}>
-        <button
-          className="btn btn-block"
-          onClick={() => {
-            go('', true);
-            setTimeout(() => mapApi.flyTo(last.lng, last.lat), 300);
-          }}
-        >
-          <MapPin size={20} /> {last.priv ? 'Mostra la zona di casa' : 'Mostra sulla mappa'}
-        </button>
+        {!gpsOnlyPhoto && (
+          <button
+            className="btn btn-block"
+            onClick={() => {
+              go('', true);
+              setTimeout(() => mapApi.flyTo(last.lng, last.lat), 300);
+            }}
+          >
+            <MapPin size={20} /> {last.priv ? 'Mostra la zona di casa' : 'Mostra sulla mappa'}
+          </button>
+        )}
         <button className="btn btn-danger btn-block" onClick={() => setRelease(true)}>
           <Trash2 size={20} /> Libera dalla collezione
         </button>
