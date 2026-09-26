@@ -2,7 +2,6 @@ import { lazy, Suspense, useEffect, useState } from 'react';
 import { releaseLocation, startLocation } from './game/location';
 import { useGame } from './game/store';
 import { MapHud } from './map/MapHud';
-import { MapView } from './map/MapView';
 import { AlbumScreen } from './screens/AlbumScreen';
 import { AnimalScreen } from './screens/AnimalScreen';
 import { CollectionScreen } from './screens/CollectionScreen';
@@ -19,6 +18,10 @@ import { useAppearance } from './ui/theme';
 
 // La cattura (con la AI) si carica a parte: l'avvio dell'app resta leggero.
 const CaptureScreen = lazy(() => import('./capture/CaptureScreen').then((m) => ({ default: m.CaptureScreen })));
+
+// La mappa (la parte più pesante) si carica a parte: pulsanti e schermate compaiono
+// subito, la mappa arriva un istante dopo.
+const MapView = lazy(() => import('./map/MapView').then((m) => ({ default: m.MapView })));
 
 // Aperta dalla scorciatoia "Cattura" (tenendo premuta l'icona): si prepara subito la
 // fotocamera e il riconoscimento, mentre l'app finisce di caricare i dati.
@@ -81,7 +84,11 @@ export function App() {
 
   return (
     <>
-      {mapOn && <MapView />}
+      {mapOn && (
+        <Suspense fallback={<div className="map-wrap" />}>
+          <MapView />
+        </Suspense>
+      )}
       {route === '' && <MapHud />}
       {route === 'collezione' && <CollectionScreen />}
       {route === 'album' && <AlbumScreen entryId={param} key={param ? 'entry' : 'list'} />}

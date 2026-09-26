@@ -10,11 +10,34 @@ import { go } from '../router';
 import { activeEvents } from '../game/events';
 import { backupDue, saveBackup } from '../ui/backupActions';
 import { Sheet, XpBar } from '../ui/common';
+import { InstallSheet, tryInstall } from '../ui/Install';
+import { isStandalone } from '../pwa';
 import { AvatarArt, GameIcon, IconBubble } from '../ui/icons';
 import { MissionsSheet } from './MissionsSheet';
-import { recenter, useFollow } from './MapView';
+import { recenter, useFollow } from './mapApi';
 
 const NEAR_M = 60;
+
+// Invito a installare l'app (solo se aperta dal browser); "più tardi" lo nasconde per una settimana.
+const INSTALL_KEY = 'zig-install-later';
+
+function showInstallHint(): boolean {
+  if (isStandalone()) return false;
+  try {
+    const t = Number(localStorage.getItem(INSTALL_KEY) ?? 0);
+    return !(t > 0 && Date.now() - t < 7 * 86400000);
+  } catch {
+    return true;
+  }
+}
+
+function hideInstallHint() {
+  try {
+    localStorage.setItem(INSTALL_KEY, String(Date.now()));
+  } catch {
+    /* memoria non disponibile */
+  }
+}
 
 export function MapHud() {
   const player = useGame((s) => s.player);
@@ -23,6 +46,8 @@ export function MapHud() {
   const gpsOnlyPhoto = useGame((s) => s.player.settings.gpsOnlyPhoto);
   const updateSettings = useGame((s) => s.updateSettings);
   const [gpsInfo, setGpsInfo] = useState(false);
+  const [installInfo, setInstallInfo] = useState(false);
+  const [installHint, setInstallHint] = useState(showInstallHint);
   const follow = useFollow((s) => s.on);
   const [showMissions, setShowMissions] = useState(false);
   const [dismissed, setDismissed] = useState<string[]>([]);
@@ -119,9 +144,35 @@ export function MapHud() {
         </div>
       )}
 
+      {installHint && !showBackup && !nearby && (
+        <div className="nearby-hint backup-hint">
+          <IconBubble name="home" size={40} tone="mint" />
+          <button
+            className="grow"
+            style={{ textAlign: 'left' }}
+            onClick={() => void tryInstall().then((done) => (done ? setInstallHint(false) : setInstallInfo(true)))}
+          >
+            <b>Installa l'app</b>
+            <div className="muted" style={{ fontSize: 13 }}>
+              Si apre a schermo intero, più veloce, con la scorciatoia Cattura
+            </div>
+          </button>
+          <button
+            aria-label="Più tardi"
+            className="muted"
+            onClick={() => {
+              hideInstallHint();
+              setInstallHint(false);
+            }}
+          >
+            <X size={20} />
+          </button>
+        </div>
+      )}
+
       {nearby && <NearbyHint {...nearby} onClose={() => setDismissed((d) => [...d, nearby.id])} />}
 
-      {gpsOnlyPhoto && !showBackup && (
+      {gpsOnlyPhoto && !showBackup && !installHint && (
         <button className="gps-off-chip" onClick={() => setGpsInfo(true)}>
           <GameIcon name="lock" size={15} /> GPS spento: animali e zone nascosti
         </button>
@@ -138,6 +189,7 @@ export function MapHud() {
       </div>}
 
       {showMissions && <MissionsSheet onClose={() => setShowMissions(false)} />}
+      {installInfo && <InstallSheet onClose={() => setInstallInfo(false)} />}
       {gpsInfo && (
         <Sheet onClose={() => setGpsInfo(false)}>
           <div className="row" style={{ gap: 12, marginBottom: 8 }}>

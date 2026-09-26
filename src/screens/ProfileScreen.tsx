@@ -13,7 +13,8 @@ import { go } from '../router';
 import { saveBackup } from '../ui/backupActions';
 import { HomeZoneSheet } from './HomeZoneSheet';
 import { badgeSummary, streaks } from '../game/summary';
-import { isIOS, isStandalone, promptInstall, useInstall } from '../pwa';
+import { isStandalone } from '../pwa';
+import { InstallSheet, tryInstall } from '../ui/Install';
 import { formatNumber, Sheet, Switch, XpBar } from '../ui/common';
 import { AvatarArt, GameIcon, Medal } from '../ui/icons';
 import { Rules } from '../ui/Rules';
@@ -30,7 +31,6 @@ export function ProfileScreen() {
   const player = useGame((s) => s.player);
   const animals = useGame((s) => s.animals);
   const toast = useGame((s) => s.toast);
-  const installPrompt = useInstall((s) => s.prompt);
   const [open, setOpen] = useState<Open>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const lvl = levelInfo(player.xp);
@@ -143,12 +143,30 @@ export function ProfileScreen() {
           </span>
           Modifica nome e avatar
         </button>
-        {!isStandalone() && (
-          <button onClick={() => (installPrompt ? void promptInstall() : setOpen('install'))}>
+        {isStandalone() ? (
+          <button onClick={() => setOpen('install')}>
             <span className="ico">
               <Smartphone size={19} />
             </span>
-            Installa l'app sul telefono
+            <span className="grow">
+              App installata
+              <div className="muted" style={{ fontSize: 13 }}>
+                La stai usando dalla schermata Home
+              </div>
+            </span>
+            <Check size={20} color="var(--teal)" />
+          </button>
+        ) : (
+          <button onClick={() => void tryInstall().then((done) => !done && setOpen('install'))}>
+            <span className="ico">
+              <Smartphone size={19} />
+            </span>
+            <span className="grow">
+              Installa l'app sul telefono
+              <div className="muted" style={{ fontSize: 13 }}>
+                Si apre a schermo intero ed è più veloce
+              </div>
+            </span>
           </button>
         )}
         <button onClick={() => go('amici')}>
@@ -317,32 +335,7 @@ export function ProfileScreen() {
           <Rules />
         </Sheet>
       )}
-      {open === 'install' && (
-        <Sheet onClose={() => setOpen(null)}>
-          <h2>Installa Zampe in Giro</h2>
-          {isIOS() ? (
-            <ol style={{ paddingLeft: 20, lineHeight: 1.6 }}>
-              <li>Apri questa pagina con <b>Safari</b></li>
-              <li>
-                Tocca il pulsante <b>Condividi</b> (il quadrato con la freccia in su)
-              </li>
-              <li>
-                Scegli <b>Aggiungi alla schermata Home</b>
-              </li>
-            </ol>
-          ) : (
-            <ol style={{ paddingLeft: 20, lineHeight: 1.6 }}>
-              <li>Apri il menu del browser (i tre puntini ⋮)</li>
-              <li>
-                Scegli <b>Installa app</b> oppure <b>Aggiungi a schermata Home</b>
-              </li>
-            </ol>
-          )}
-          <p className="muted" style={{ marginTop: 10 }}>
-            Così l'app si apre a schermo intero come le altre e i tuoi dati sono più al sicuro.
-          </p>
-        </Sheet>
-      )}
+      {open === 'install' && <InstallSheet onClose={() => setOpen(null)} />}
       {open === 'about' && (
         <Sheet onClose={() => setOpen(null)}>
           <h2>Zampe in Giro</h2>

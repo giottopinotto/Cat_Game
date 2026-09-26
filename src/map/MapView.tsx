@@ -1,12 +1,12 @@
 import * as maplibregl from 'maplibre-gl';
-import type { GeoJSONSource, MapGeoJSONFeature, StyleSpecification } from 'maplibre-gl';
+import type { GeoJSONSource, StyleSpecification } from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import mapWorkerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url';
 import { useEffect, useRef, useState } from 'react';
-import { create } from 'zustand';
 import { RARITY_INFO, type Animal } from '../data/types';
 import { hexPolygon } from '../game/geo';
-import { useLocation, type Fix } from '../game/location';
+import { useLocation } from '../game/location';
+import { mapApi, PLAY_PITCH, PLAY_ZOOM, useFollow } from './mapApi';
 import { photoUrl } from '../game/photos';
 import { useGame } from '../game/store';
 import { go } from '../router';
@@ -41,53 +41,6 @@ const FALLBACK_STYLE: StyleSpecification = {
 };
 
 const ITALY: [number, number] = [12.5, 42.3];
-const PLAY_ZOOM = 17;
-const PLAY_PITCH = 45;
-
-/** La mappa segue il giocatore finché non la si sposta col dito. */
-export const useFollow = create<{ on: boolean }>(() => ({ on: true }));
-
-/** Accesso alla mappa dal resto dell'app (centratura, riconoscimento parchi). */
-export const mapApi = {
-  map: null as maplibregl.Map | null,
-  /** Lo stile della mappa è pronto (isStyleLoaded() resta falso finché si caricano i riquadri). */
-  ready: false,
-  setFollow(on: boolean) {
-    useFollow.setState({ on });
-  },
-  flyTo(lng: number, lat: number) {
-    this.setFollow(false);
-    this.map?.flyTo({ center: [lng, lat], zoom: 18, pitch: PLAY_PITCH, duration: 1200 });
-  },
-  /** True se il punto cade dentro un parco o un giardino disegnato sulla mappa. */
-  isInPark(lng: number, lat: number): boolean {
-    const map = this.map;
-    if (!map || !this.ready) return false;
-    try {
-      const p = map.project([lng, lat]);
-      const c = map.getCanvas();
-      if (p.x < 0 || p.y < 0 || p.x > c.clientWidth || p.y > c.clientHeight) return false;
-      const feats = map.queryRenderedFeatures([
-        [p.x - 3, p.y - 3],
-        [p.x + 3, p.y + 3],
-      ]);
-      return feats.some(isParkFeature);
-    } catch {
-      return false;
-    }
-  },
-};
-
-const PARK_CLASSES = new Set(['park', 'garden', 'recreation_ground', 'village_green', 'dog_park', 'nature_reserve', 'playground']);
-
-function isParkFeature(f: MapGeoJSONFeature): boolean {
-  const props = f.properties ?? {};
-  if (f.sourceLayer === 'park') return true;
-  if (f.sourceLayer === 'landcover' || f.sourceLayer === 'landuse') {
-    return PARK_CLASSES.has(String(props.subclass)) || PARK_CLASSES.has(String(props.class));
-  }
-  return false;
-}
 
 function circle(lng: number, lat: number, radiusM: number): GeoJSON.Feature<GeoJSON.Polygon> {
   const pts: [number, number][] = [];
@@ -507,10 +460,4 @@ export function MapView() {
       )}
     </div>
   );
-}
-
-/** Riporta la mappa sul giocatore e riattiva l'inseguimento. */
-export function recenter(fix: Fix | null) {
-  mapApi.setFollow(true);
-  if (fix) mapApi.map?.flyTo({ center: [fix.lng, fix.lat], zoom: PLAY_ZOOM, pitch: PLAY_PITCH, bearing: 0, duration: 900 });
 }

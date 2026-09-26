@@ -5,7 +5,7 @@ import type { Animal, Encounter } from '../data/types';
 import { usePhoto } from '../game/photos';
 import { daysToNextFriendship, distinctDays, friendshipLevel, FRIEND_NAMES, pawPoints } from '../game/progress';
 import { useGame } from '../game/store';
-import { mapApi } from '../map/MapView';
+import { mapApi } from '../map/mapApi';
 import { back, go } from '../router';
 import { AnimalCard } from '../ui/AnimalCard';
 import { formatDate, RarityPill, Sheet } from '../ui/common';

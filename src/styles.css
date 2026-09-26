@@ -4217,3 +4217,9 @@ textarea.input {
 .next-reward .avatar::after {
   animation: none !important;
 }
+
+.install-steps {
+  padding-left: 22px;
+  line-height: 1.7;
+  font-size: 16px;
+}

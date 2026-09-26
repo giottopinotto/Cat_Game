@@ -5,7 +5,7 @@ import type { Species } from '../data/types';
 import { captureFixOk, releaseLocation, startLocation, tooFast, useLocation, waitForFix, type Fix } from '../game/location';
 import { useGame } from '../game/store';
 import type { CaptureOutcome } from '../game/store';
-import { mapApi } from '../map/MapView';
+import { mapApi } from '../map/mapApi';
 import { back } from '../router';
 import { vibrate } from '../ui/common';
 import { GameIcon, IconBubble } from '../ui/icons';
